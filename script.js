@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initDiceSelectors();
     initChipSelector();
     initBetBoxes();
+    initGameMode();  // 初始化游戏模式
     updateDisplay();
     syncChipSelection(); // 同步筹码选择状态
 });
@@ -793,5 +794,271 @@ function loadState() {
                 }
             });
         }
+    }
+}
+
+// ============ 模式切换功能 ============
+
+let tempGameMode = 'single';  // 临时存储选择的模式
+let tempPlayerCount = 2;      // 临时存储选择的玩家数
+
+// 打开模式选择模态框（只在多人模式时打开）
+function openModeModal() {
+    const currentMode = state.gameMode || 'single';
+    
+    // 如果当前是单人模式，点击按钮直接切换到多人模式并打开选择框
+    if (currentMode === 'single') {
+        tempGameMode = 'multi';
+        tempPlayerCount = state.playerCount || 2;
+        
+        const modal = document.getElementById('modeModal');
+        modal.classList.add('active');
+        updateModeSelection();
+    } else {
+        // 如果当前是多人模式，点击按钮直接切换回单人模式
+        if (confirm('切换到单人模式将清除当前游戏数据，是否继续？')) {
+            state.gameMode = 'single';
+            state.playerCount = 1;
+            
+            // 更新图标
+            const modeIcon = document.getElementById('modeIcon');
+            modeIcon.textContent = '👤';
+            
+            // 重新加载界面（这里暂时只是提示，后续会实现界面切换）
+            alert('已切换到单人模式');
+            saveState();
+        }
+    }
+}
+
+// 关闭模态框
+function closeModeModal() {
+    const modal = document.getElementById('modeModal');
+    modal.classList.remove('active');
+}
+
+// 设置玩家数量
+function setPlayerCount(count) {
+    tempPlayerCount = count;
+    updateModeSelection();
+}
+
+// 更新选择状态
+function updateModeSelection() {
+    // 更新玩家数量按钮
+    document.querySelectorAll('.player-count-btn').forEach((btn, index) => {
+        const count = index + 2; // 2, 3, 4, 5, 6
+        if (count === tempPlayerCount) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+}
+
+// 确认模式切换（多人模式）
+function confirmModeChange() {
+    // 保存新模式
+    state.gameMode = 'multi';
+    state.playerCount = tempPlayerCount;
+    
+    // 更新图标
+    const modeIcon = document.getElementById('modeIcon');
+    modeIcon.textContent = '👥';
+    
+    // TODO: 这里将实现多人模式的界面切换
+    alert(`多人模式：${tempPlayerCount}个闲家\n功能开发中...`);
+    
+    closeModeModal();
+    saveState();
+}
+
+// 初始化模式（在页面加载时调用）
+function initGameMode() {
+    state.gameMode = state.gameMode || 'single';
+    state.playerCount = state.playerCount || 2;
+    
+    // 更新图标
+    const modeIcon = document.getElementById('modeIcon');
+    if (modeIcon) {
+        modeIcon.textContent = state.gameMode === 'single' ? '👤' : '👥';
+    }
+    
+    // 初始化拖动功能
+    initDraggableButton();
+}
+
+// ============ 可拖动悬浮按钮功能 ============
+
+function initDraggableButton() {
+    const btn = document.querySelector('.mode-toggle-btn');
+    if (!btn) return;
+    
+    let isDragging = false;
+    let startX, startY;
+    let currentX, currentY;
+    let isExpanded = false;
+    let expandTimer = null;
+    
+    // 恢复保存的位置和侧边
+    const savedSide = localStorage.getItem('modeBtnSide') || 'right';
+    const savedY = localStorage.getItem('modeBtnY') || '50%';
+    
+    if (savedSide === 'left') {
+        btn.classList.add('left-side');
+    }
+    btn.style.top = savedY;
+    
+    // 鼠标事件（仅PC端）
+    btn.addEventListener('mousedown', startDrag);
+    btn.addEventListener('mouseenter', expandButton);
+    btn.addEventListener('mouseleave', collapseButton);
+    
+    // 触摸事件（移动端）
+    let touchStartTime = 0;
+    btn.addEventListener('touchstart', (e) => {
+        touchStartTime = Date.now();
+        expandButton();
+        startDrag(e);
+    }, { passive: false });
+    
+    btn.addEventListener('touchend', (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+        
+        // 如果是快速点击（不是拖动），打开模态框
+        if (!isDragging && touchDuration < 300) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleButtonClick(e);
+        }
+    });
+    
+    // 点击事件（PC端）
+    btn.addEventListener('click', handleButtonClick);
+    
+    function handleButtonClick(e) {
+        // 如果刚刚拖动过，不触发点击
+        if (isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+        
+        // 防止重复触发
+        if (e.type === 'touchend') {
+            e.preventDefault();
+        }
+        
+        expandButton();
+        // 延迟一点再打开模态框，让动画完成
+        setTimeout(() => {
+            openModeModal();
+        }, 150);
+    }
+    
+    function startDrag(e) {
+        // 触摸事件不要阻止默认行为，让它可以触发click
+        if (e.type === 'mousedown') {
+            e.preventDefault();
+        }
+        
+        isDragging = false;
+        
+        const touch = e.touches ? e.touches[0] : e;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        
+        // 获取当前位置
+        const rect = btn.getBoundingClientRect();
+        currentX = rect.left + rect.width / 2;
+        currentY = rect.top + rect.height / 2;
+        
+        btn.classList.add('dragging');
+        expandButton();
+        
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('touchmove', onDrag, { passive: false });
+        document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('touchend', stopDrag);
+    }
+    
+    function onDrag(e) {
+        e.preventDefault();
+        const touch = e.touches ? e.touches[0] : e;
+        
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        
+        // 如果移动距离超过5px，认为是拖动
+        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+            isDragging = true;
+        }
+        
+        if (isDragging) {
+            currentY = currentY + deltaY;
+            startY = touch.clientY;
+            
+            // 限制在屏幕范围内
+            const maxY = window.innerHeight - 22.5;
+            const minY = 22.5;
+            currentY = Math.max(minY, Math.min(maxY, currentY));
+            
+            btn.style.top = currentY + 'px';
+        }
+    }
+    
+    function stopDrag(e) {
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('touchmove', onDrag);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchend', stopDrag);
+        
+        btn.classList.remove('dragging');
+        
+        const wasDragging = isDragging;
+        
+        if (wasDragging) {
+            // 吸附到最近的边
+            const centerX = window.innerWidth / 2;
+            const rect = btn.getBoundingClientRect();
+            const btnCenterX = rect.left + rect.width / 2;
+            
+            if (btnCenterX < centerX) {
+                // 吸附到左边
+                btn.classList.add('left-side');
+                btn.style.right = 'auto';
+                localStorage.setItem('modeBtnSide', 'left');
+            } else {
+                // 吸附到右边
+                btn.classList.remove('left-side');
+                btn.style.left = 'auto';
+                localStorage.setItem('modeBtnSide', 'right');
+            }
+            
+            // 保存Y位置
+            localStorage.setItem('modeBtnY', btn.style.top);
+            
+            // 拖动后收起按钮
+            collapseButton();
+        }
+        
+        // 延迟重置拖动标志，确保click事件能正确判断
+        setTimeout(() => {
+            isDragging = false;
+        }, 100);
+    }
+    
+    function expandButton() {
+        clearTimeout(expandTimer);
+        isExpanded = true;
+        btn.classList.add('expanded');
+    }
+    
+    function collapseButton() {
+        clearTimeout(expandTimer);
+        expandTimer = setTimeout(() => {
+            isExpanded = false;
+            btn.classList.remove('expanded');
+        }, 300);
     }
 }

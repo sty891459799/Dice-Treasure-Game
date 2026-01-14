@@ -15,6 +15,11 @@
         <header class="header">
             <h1 class="title">骰 宝</h1>
             
+            <!-- 模式切换按钮 -->
+            <button class="mode-toggle-btn" onclick="openModeModal()" title="切换游戏模式">
+                <span id="modeIcon">👤</span>
+            </button>
+            
             <!-- 筹码选择移到这里 -->
             <div class="header-chip-section">
                 <div class="chip-selector">
@@ -244,6 +249,27 @@
             </div>
             <div class="history-list" id="historyList">
                 <div class="empty-history">暂无记录</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 多人模式选择模态框 -->
+    <div class="mode-modal" id="modeModal">
+        <div class="mode-modal-content">
+            <h2>👥 多人模式</h2>
+            <p class="mode-description">选择参与游戏的闲家数量</p>
+            
+            <div class="player-count-options">
+                <button class="player-count-btn" onclick="setPlayerCount(2)">2人</button>
+                <button class="player-count-btn" onclick="setPlayerCount(3)">3人</button>
+                <button class="player-count-btn" onclick="setPlayerCount(4)">4人</button>
+                <button class="player-count-btn" onclick="setPlayerCount(5)">5人</button>
+                <button class="player-count-btn" onclick="setPlayerCount(6)">6人</button>
+            </div>
+            
+            <div class="mode-modal-actions">
+                <button class="mode-cancel-btn" onclick="closeModeModal()">取消</button>
+                <button class="mode-confirm-btn" onclick="confirmModeChange()">开始游戏</button>
             </div>
         </div>
     </div>
