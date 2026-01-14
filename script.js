@@ -484,19 +484,9 @@ function confirmResult() {
     // 重置骰子选择
     resetDiceSelection();
     
-    // 延迟清除下注（等待闪烁动画结束后再清除）
-    setTimeout(() => {
-        state.bets = {};
-        updateDisplay();
-        saveState();
-    }, 10000); // 10秒后清除，与闪烁动画时长一致
-    
-    // 立即更新显示（但不清除筹码）
+    // 立即更新显示（但不清除筹码，筹码清除由calculateWinnings在10秒后处理）
     updateDisplay();
     saveState();
-    
-    // 检查游戏是否结束
-    checkGameOver();
 }
 
 // 高亮中奖区域
@@ -688,6 +678,18 @@ function calculateSingleModeWinnings(dice, total, isTriple) {
                 }, 800);
             }
         }
+        
+        // 清除押注数据和界面显示
+        state.bets = {};
+        document.querySelectorAll('.chip-stack').forEach(stack => {
+            stack.innerHTML = '';
+        });
+        document.querySelectorAll('.bet-box').forEach(box => {
+            box.classList.remove('has-bet');
+        });
+        
+        // 检查游戏是否结束
+        checkGameOver();
     }, 10000); // 等待10秒后再加积分
 }
 
@@ -779,8 +781,20 @@ function calculateMultiModeWinnings(dice, total, isTriple) {
             document.getElementById('bankerBalance').textContent = state.bankerBalance;
         }
         
+        // 清除押注数据和界面显示
+        state.bets = {};
+        document.querySelectorAll('.chip-stack').forEach(stack => {
+            stack.innerHTML = '';
+        });
+        document.querySelectorAll('.bet-box').forEach(box => {
+            box.classList.remove('has-bet');
+        });
+        
         updateDisplay();
         saveState();
+        
+        // 检查游戏是否结束
+        checkGameOver();
     }, 10000); // 等待10秒后再加积分
 }
 
