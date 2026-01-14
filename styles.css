@@ -1,0 +1,1578 @@
+/* CSS Variables */
+:root {
+    --bg-dark: #0a0a0a;
+    --bg-table: #0d4d2d;
+    --gold: #d4af37;
+    --gold-light: #f4d03f;
+    --gold-dark: #b8860b;
+    --red: #c41e3a;
+    --blue: #2980b9;
+    --white: #f5f5f5;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: #0a0a0a;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, rgba(13, 51, 32, 0.6) 0%, #0a0a0a 70%);
+    z-index: -1;
+}
+
+/* 核心布局 */
+.game-container {
+    display: grid;
+    grid-template-areas: 
+        "header header"
+        "history main";
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    width: 100vw;
+    gap: 6px;
+    padding: 6px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* 顶部 Header */
+.header {
+    grid-area: header;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: linear-gradient(180deg, #3d2817 0%, #1a1108 100%);
+    border-radius: 10px;
+    border: 3px solid var(--gold);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.3);
+    gap: 25px;
+}
+
+.title {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 2rem;
+    color: var(--gold-light);
+    text-shadow: 2px 2px 4px #000, 0 0 15px rgba(212, 175, 55, 0.4);
+    flex-shrink: 0;
+}
+
+/* 筹码区域 */
+.header-chip-section {
+    flex: 0 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 15px;
+    border-radius: 40px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.chip-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.chip {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: white;
+    border: 3px dashed rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.chip:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+}
+
+.chip.selected { 
+    border-style: solid; 
+    box-shadow: 0 0 15px white, 0 6px 12px rgba(0,0,0,0.5); 
+    transform: scale(1.1) translateY(-2px);
+}
+
+.chip[data-value="10"] { background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0); color: #333; font-weight: bold; }
+.chip[data-value="30"] { background: radial-gradient(circle at 30% 30%, #2196F3, #0d47a1); }
+.chip[data-value="50"] { background: radial-gradient(circle at 30% 30%, #4CAF50, #1b5e20); }
+.chip[data-value="100"] { background: radial-gradient(circle at 30% 30%, #f44336, #b71c1c); }
+.chip[data-value="300"] { background: radial-gradient(circle at 30% 30%, #9C27B0, #4A148C); }
+.chip[data-value="500"] { background: radial-gradient(circle at 30% 30%, #FF9800, #E65100); }
+
+.header-bet-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    font-size: 0.95rem;
+    border-left: 1px solid rgba(255,255,255,0.2);
+    padding-left: 15px;
+}
+
+.header-bet-info strong { 
+    color: var(--gold-light); 
+    font-size: 1.3rem; 
+    text-shadow: 0 0 8px rgba(244, 208, 63, 0.5); 
+}
+
+.header-clear-btn {
+    padding: 4px 12px;
+    background: linear-gradient(to bottom, #e74c3c, #c0392b);
+    color: white;
+    border: 1px solid #922b21;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.header-clear-btn:hover {
+    background: linear-gradient(to bottom, #ec7063, #e74c3c);
+}
+
+/* 计分板 */
+.score-section { 
+    display: flex; 
+    gap: 12px; 
+    flex-shrink: 0;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+.score-card { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    padding: 6px 15px; 
+    border-radius: 8px; 
+    border: 2px solid; 
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+}
+.score-card h2 { 
+    font-size: 1rem; 
+    color: white; 
+    text-shadow: 1px 1px 2px black; 
+    flex-shrink: 0;
+}
+.score-card.banker { background: linear-gradient(135deg, #c41e3a, #922b21); border-color: #ff6b6b; }
+.score-card.player { background: linear-gradient(135deg, #2980b9, #1a5276); border-color: #5dade2; }
+.score-display { 
+    font-size: 1.5rem; 
+    font-weight: 900; 
+    color: white; 
+    min-width: 60px; 
+    text-align: center; 
+    text-shadow: 0 0 10px rgba(255,255,255,0.3); 
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.score-display.flash-increase {
+    animation: flashIncrease 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes flashIncrease {
+    0% { 
+        transform: scale(1);
+        color: white;
+    }
+    50% { 
+        transform: scale(1.8);
+        color: #FFD700;
+    }
+    100% { 
+        transform: scale(1);
+        color: white;
+    }
+}
+.score-controls { 
+    display: flex; 
+    gap: 3px; 
+    flex-shrink: 0;
+}
+.score-btn { 
+    padding: 2px 6px;
+    min-width: 42px;
+    height: 24px; 
+    font-size: 0.7rem; 
+    border-radius: 4px; 
+    border: 1px solid rgba(255,255,255,0.3); 
+    background: rgba(255,255,255,0.1); 
+    color: white; 
+    cursor: pointer;
+    white-space: nowrap;
+}
+.score-btn:hover { background: rgba(255,255,255,0.2); }
+
+/* 主内容区 */
+.main-content {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* 输入区面板 */
+.left-panel {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    border-radius: 10px;
+    padding: 8px 15px;
+    border: 3px solid var(--gold);
+    box-shadow: 
+        0 5px 15px rgba(0,0,0,0.6), 
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        inset 0 -2px 5px rgba(0,0,0,0.3);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.left-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+    opacity: 0.5;
+}
+
+.dice-input-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.dice-input-section h3 {
+    color: var(--gold-light);
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-align: center;
+    margin: 0;
+    text-shadow: 
+        0 0 10px rgba(244, 208, 63, 0.6),
+        0 2px 4px rgba(0,0,0,0.8);
+    text-transform: uppercase;
+}
+
+.dice-inputs {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.dice-input-group {
+    background: linear-gradient(145deg, rgba(0,0,0,0.5), rgba(0,0,0,0.7));
+    border: 2px solid rgba(212, 175, 55, 0.4);
+    border-radius: 6px;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 
+        inset 0 2px 4px rgba(0,0,0,0.5),
+        0 2px 8px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+    flex: 1;
+    min-width: 0;
+}
+
+.dice-input-group:hover {
+    border-color: rgba(212, 175, 55, 0.6);
+    box-shadow: 
+        inset 0 2px 4px rgba(0,0,0,0.5),
+        0 2px 8px rgba(0,0,0,0.3),
+        0 0 10px rgba(212, 175, 55, 0.2);
+}
+
+.dice-input-group label { 
+    color: var(--gold-light); 
+    font-size: 0.95rem; 
+    font-weight: 900; 
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    min-width: 40px;
+}
+
+.dice-selector { 
+    display: flex; 
+    gap: 5px; 
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+}
+
+.dice-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    position: relative;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dice-btn .dice {
+    box-shadow: 
+        0 3px 0 #a0a0a0,
+        0 4px 8px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,1),
+        inset 0 -1px 2px rgba(0,0,0,0.1);
+}
+
+.dice-btn:hover {
+    transform: translateY(-1px);
+}
+
+.dice-btn:hover .dice {
+    box-shadow: 
+        0 4px 0 #a0a0a0,
+        0 5px 10px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,1),
+        inset 0 -1px 2px rgba(0,0,0,0.1);
+}
+
+.dice-btn:active {
+    transform: translateY(2px);
+}
+
+.dice-btn:active .dice {
+    box-shadow: 
+        0 1px 0 #a0a0a0,
+        0 2px 4px rgba(0,0,0,0.4),
+        inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.dice-btn.selected { 
+    transform: translateY(2px);
+}
+
+.dice-btn.selected .dice { 
+    background: linear-gradient(145deg, #ffd700, #f4d03f, #d4af37);
+    box-shadow: 
+        0 1px 0 #8b6914,
+        0 2px 6px rgba(212, 175, 55, 0.6),
+        0 0 15px rgba(244, 208, 63, 0.5),
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        inset 0 -1px 3px rgba(0,0,0,0.3);
+}
+
+.result-preview {
+    background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(20,20,20,0.8));
+    border-radius: 8px;
+    padding: 6px 12px;
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 
+        inset 0 2px 5px rgba(0,0,0,0.5),
+        0 3px 10px rgba(0,0,0,0.4);
+}
+
+.preview-die { 
+    font-size: 1.8rem; 
+    color: white; 
+    text-shadow: 
+        0 0 8px rgba(255,255,255,0.8),
+        0 2px 4px rgba(0,0,0,0.5); 
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+}
+
+.preview-info { 
+    font-size: 0.85rem; 
+    color: var(--gold-light); 
+    font-weight: 900; 
+    text-shadow: 
+        0 0 8px rgba(244, 208, 63, 0.5),
+        0 1px 3px rgba(0,0,0,0.8);
+    letter-spacing: 0.5px;
+}
+
+.confirm-btn {
+    background: linear-gradient(180deg, #2ecc71 0%, #27ae60 50%, #1e8449 100%);
+    color: white;
+    border: none;
+    padding: 8px 30px;
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 
+        0 4px 0 #145a32,
+        0 5px 12px rgba(39, 174, 96, 0.5),
+        inset 0 1px 0 rgba(255,255,255,0.3);
+    text-shadow: 
+        0 2px 3px rgba(0,0,0,0.5),
+        0 0 10px rgba(255,255,255,0.2);
+    transition: all 0.15s;
+    letter-spacing: 2px;
+}
+
+.confirm-btn:hover {
+    background: linear-gradient(180deg, #52be80 0%, #2ecc71 50%, #27ae60 100%);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 7px 0 #145a32,
+        0 8px 20px rgba(39, 174, 96, 0.6),
+        0 0 15px rgba(46, 204, 113, 0.4),
+        inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.confirm-btn:active { 
+    transform: translateY(3px); 
+    box-shadow: 
+        0 2px 0 #145a32,
+        0 3px 8px rgba(39, 174, 96, 0.4),
+        inset 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.confirm-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 押注棋盘 */
+.betting-table {
+    background: radial-gradient(circle at center, #0d4d2d 0%, #072b1a 100%);
+    border-radius: 10px;
+    padding: 8px;
+    border: 3px solid var(--gold-dark);
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.bet-section { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 0; 
+}
+
+.top-bets { 
+    display: grid; 
+    grid-template-columns: 1.2fr 1.2fr 1fr 1fr 1fr 1fr 1fr 1fr; 
+    gap: 6px; 
+    flex: 1; 
+}
+
+.bet-box.pair {
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%) !important;
+}
+
+.pair-dice {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 3px;
+}
+
+.bet-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.05), 0 3px 6px rgba(0,0,0,0.3);
+    transition: all 0.2s;
+    cursor: pointer;
+    height: 100%;
+    min-height: 45px;
+    z-index: 1;
+    overflow: visible;
+    padding: 8px;
+}
+
+.bet-box:hover { 
+    border-color: rgba(255,255,255,0.3); 
+    transform: translateY(-1px); 
+}
+
+.bet-box.has-bet {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+    z-index: 10;
+}
+
+.big-small { background: linear-gradient(135deg, #c41e3a 0%, #922b21 100%) !important; }
+.odd-even { background: linear-gradient(135deg, #2980b9 0%, #1a5276 100%) !important; }
+.bet-box.total { background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%) !important; }
+.bet-box.triple { background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%) !important; }
+.bet-box.any-triple { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%) !important; }
+.bet-box.single { background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%) !important; }
+
+.bet-name { 
+    font-size: 1.5rem; 
+    font-weight: 900; 
+    color: white; 
+    letter-spacing: 3px; 
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.bet-range { 
+    font-size: 0.65rem; 
+    font-weight: bold; 
+    color: rgba(255,255,255,0.7); 
+    margin-top: 2px; 
+}
+
+.bet-odds {
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: #ffd700;
+    margin-top: 3px;
+    text-shadow: 
+        0 1px 3px rgba(0,0,0,0.9),
+        0 0 5px rgba(255, 215, 0, 0.5);
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+.total-grid { 
+    display: grid; 
+    grid-template-columns: repeat(14, 1fr); 
+    gap: 4px; 
+    flex: 1; 
+}
+
+.triple-grid { 
+    display: grid; 
+    grid-template-columns: repeat(7, 1fr); 
+    gap: 4px; 
+    flex: 1; 
+}
+
+.single-grid { 
+    display: grid; 
+    grid-template-columns: repeat(6, 1fr); 
+    gap: 4px; 
+    flex: 1; 
+}
+
+.double-grid {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 2px;
+    flex: 1;
+}
+
+.bet-box.double {
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%) !important;
+    padding: 3px;
+}
+
+.double-dice {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+
+.bet-number { 
+    font-size: 1.1rem; 
+    font-weight: 900; 
+    color: white; 
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    margin-bottom: 2px;
+}
+
+.dice-icon { 
+    width: 50px;
+    height: 50px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 3px 6px rgba(0,0,0,0.4),
+        inset 0 1px 2px rgba(0,0,0,0.1);
+    margin-bottom: 3px;
+    font-size: 2rem;
+    color: #d32f2f;
+    font-weight: 900;
+}
+
+.triple-dice { 
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 3px;
+}
+
+/* 筹码堆叠 */
+.chip-stack {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.chip-item {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid white;
+    font-size: 0.55rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: -12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.8);
+    text-shadow: 1px 1px 2px black;
+    position: relative;
+    z-index: 1;
+}
+
+.chip-item.chip-10 { background: radial-gradient(circle, #ffffff, #e0e0e0); color: #333; font-weight: bold; }
+.chip-item.chip-30 { background: radial-gradient(circle, #2196F3, #0d47a1); }
+.chip-item.chip-50 { background: radial-gradient(circle, #4CAF50, #1b5e20); }
+.chip-item.chip-100 { background: radial-gradient(circle, #f44336, #b71c1c); }
+.chip-item.chip-300 { background: radial-gradient(circle, #9C27B0, #4A148C); }
+.chip-item.chip-500 { background: radial-gradient(circle, #FF9800, #E65100); }
+
+.chip-total {
+    font-size: 0.65rem;
+    background: #000;
+    color: var(--gold-light);
+    padding: 2px 5px;
+    border-radius: 12px;
+    margin-left: 14px;
+    border: 1px solid var(--gold);
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    white-space: nowrap;
+}
+
+/* 历史记录 */
+.history-panel {
+    grid-area: history;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    padding: 8px;
+    border: 2px solid var(--gold-dark);
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.history-header { 
+    display: flex; 
+    justify-content: space-between; 
+    margin-bottom: 6px; 
+    flex-shrink: 0;
+}
+
+.history-header h3 { 
+    font-size: 0.8rem; 
+    color: var(--gold); 
+    letter-spacing: 1px; 
+}
+
+.clear-history-btn {
+    padding: 2px 6px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    cursor: pointer;
+}
+
+.history-list { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px; 
+    overflow-y: auto; 
+    flex: 1;
+}
+
+.history-item {
+    display: grid;
+    grid-template-columns: 30px max-content max-content max-content;
+    align-items: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 3px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.history-item:hover { background: rgba(255,255,255,0.08); }
+
+.history-round { 
+    font-size: 0.75rem; 
+    color: #666; 
+    font-weight: bold;
+}
+
+.history-dice-nums { 
+    font-size: 1.05rem; 
+    color: white; 
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-total { 
+    font-size: 1.2rem; 
+    font-weight: 900; 
+    text-align: center;
+    min-width: 28px;
+}
+
+.history-item.big .history-total { color: #ff4444; text-shadow: 0 0 5px rgba(255, 68, 68, 0.5); }
+.history-item.small .history-total { color: #4488ff; text-shadow: 0 0 5px rgba(68, 136, 255, 0.5); }
+.history-item.triple .history-total { color: var(--gold-light); text-shadow: 0 0 8px rgba(244, 208, 63, 0.6); }
+
+.history-size { 
+    font-size: 1.05rem; 
+    font-weight: 900; 
+    min-width: 24px;
+    text-align: center;
+}
+
+.history-item.big .history-size { color: #ff4444; }
+.history-item.small .history-size { color: #4488ff; }
+.history-item.triple .history-size { color: var(--gold-light); }
+
+.empty-history {
+    text-align: center;
+    color: #666;
+    padding: 15px;
+    font-size: 0.75rem;
+}
+
+/* 中奖动画 */
+@keyframes winGlow {
+    0% { 
+        box-shadow: 0 0 0px #ffff00; 
+        border-color: rgba(255,255,255,0.15); 
+        background: inherit;
+        filter: brightness(1);
+    }
+    25% {
+        box-shadow: 0 0 40px #ffff00, 0 0 60px rgba(255, 255, 0, 0.8), inset 0 0 30px rgba(255, 255, 0, 0.3);
+        border-color: #ffff00;
+        background: linear-gradient(135deg, rgba(255, 255, 0, 0.4), rgba(255, 215, 0, 0.3));
+        transform: scale(1.05);
+        filter: brightness(1.8) saturate(1.5);
+    }
+    50% { 
+        box-shadow: 0 0 50px #ff6600, 0 0 80px rgba(255, 102, 0, 0.9), inset 0 0 40px rgba(255, 102, 0, 0.4); 
+        border-color: #ff6600; 
+        background: linear-gradient(135deg, rgba(255, 102, 0, 0.5), rgba(255, 69, 0, 0.4));
+        transform: scale(1.08); 
+        filter: brightness(2) saturate(2);
+    }
+    75% {
+        box-shadow: 0 0 40px #ffff00, 0 0 60px rgba(255, 255, 0, 0.8), inset 0 0 30px rgba(255, 255, 0, 0.3);
+        border-color: #ffff00;
+        background: linear-gradient(135deg, rgba(255, 255, 0, 0.4), rgba(255, 215, 0, 0.3));
+        transform: scale(1.05);
+        filter: brightness(1.8) saturate(1.5);
+    }
+    100% { 
+        box-shadow: 0 0 0px #ffff00; 
+        border-color: rgba(255,255,255,0.15); 
+        background: inherit;
+    }
+}
+
+.winning { 
+    animation: winGlow 0.8s ease-in-out infinite !important; 
+    z-index: 100; 
+    position: relative;
+}
+
+/* 游戏结束动画 */
+.game-over-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.5s ease;
+}
+
+.game-over-content {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 5px solid var(--gold);
+    border-radius: 20px;
+    padding: 60px 80px;
+    text-align: center;
+    box-shadow: 
+        0 0 50px rgba(212, 175, 55, 0.5),
+        0 20px 60px rgba(0, 0, 0, 0.8),
+        inset 0 0 30px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.winner-text {
+    font-size: 5rem;
+    font-weight: 900;
+    color: var(--gold-light);
+    text-shadow: 
+        0 0 20px rgba(255, 215, 0, 0.8),
+        0 0 40px rgba(255, 215, 0, 0.6),
+        0 5px 10px rgba(0, 0, 0, 0.8);
+    margin-bottom: 30px;
+    animation: textGlow 1.5s ease-in-out infinite;
+    letter-spacing: 10px;
+}
+
+.winner-subtitle {
+    font-size: 2.5rem;
+    color: white;
+    margin-bottom: 40px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.restart-btn {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+    color: white;
+    border: none;
+    padding: 20px 60px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 
+        0 5px 0 #8b6914,
+        0 10px 25px rgba(212, 175, 55, 0.5);
+    transition: all 0.2s;
+    letter-spacing: 3px;
+}
+
+.restart-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 8px 0 #8b6914,
+        0 15px 35px rgba(212, 175, 55, 0.6);
+}
+
+.restart-btn:active {
+    transform: translateY(3px);
+    box-shadow: 
+        0 2px 0 #8b6914,
+        0 5px 15px rgba(212, 175, 55, 0.4);
+}
+
+/* 烟花效果 */
+.firework {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: var(--gold-light);
+    border-radius: 50%;
+    animation: explode 1.8s ease-out forwards;
+    pointer-events: none;
+}
+
+.firework::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: inherit;
+    border-radius: 50%;
+    animation: pulse 0.5s ease-out infinite;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+    50% { transform: scale(1.05) rotate(2deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes textGlow {
+    0%, 100% { 
+        text-shadow: 
+            0 0 20px rgba(255, 215, 0, 0.8),
+            0 0 40px rgba(255, 215, 0, 0.6),
+            0 5px 10px rgba(0, 0, 0, 0.8);
+    }
+    50% { 
+        text-shadow: 
+            0 0 30px rgba(255, 215, 0, 1),
+            0 0 60px rgba(255, 215, 0, 0.8),
+            0 0 80px rgba(255, 215, 0, 0.6),
+            0 5px 10px rgba(0, 0, 0, 0.8);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes explode {
+    0% { 
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% { 
+        transform: translate(var(--x), var(--y)) scale(0.3);
+        opacity: 0;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* 骰子样式 */
+.dice {
+    width: 30px;
+    height: 30px;
+    background: white;
+    border-radius: 5px;
+    display: grid;
+    grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+    padding: 3px;
+    gap: 0;
+    box-shadow: 
+        0 2px 4px rgba(0,0,0,0.3),
+        inset 0 1px 1px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.dice .dot {
+    width: 5px;
+    height: 5px;
+    background: #d32f2f;
+    border-radius: 50%;
+    margin: auto;
+}
+
+/* 隐藏所有点，只显示需要的 */
+.dice .dot {
+    display: none;
+}
+
+/* iPad 和小屏幕响应式适配 */
+@media screen and (max-width: 1400px) {
+    .game-container {
+        grid-template-columns: 170px 1fr;
+        gap: 4px;
+        padding: 4px;
+    }
+    
+    .dice-inputs {
+        gap: 10px;
+    }
+    
+    .dice-input-group {
+        padding: 4px 6px;
+        gap: 6px;
+    }
+    
+    .dice-selector {
+        gap: 4px;
+    }
+    
+    .dice-btn {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .score-section {
+        gap: 10px;
+    }
+    
+    .score-card {
+        gap: 8px;
+        padding: 5px 12px;
+    }
+    
+    .score-card h2 {
+        font-size: 0.9rem;
+    }
+    
+    .score-display {
+        font-size: 1.4rem;
+        min-width: 50px;
+    }
+    
+    .score-btn {
+        min-width: 38px;
+        height: 22px;
+        font-size: 0.65rem;
+    }
+    
+    .double-grid {
+        gap: 2px;
+    }
+    
+    .dice {
+        width: 26px;
+        height: 26px;
+        padding: 2px;
+    }
+    
+    .dice .dot {
+        width: 4px;
+        height: 4px;
+    }
+    
+    .double-dice {
+        gap: 1px;
+    }
+    
+    .betting-table {
+        padding: 6px;
+        gap: 6px;
+    }
+    
+    .bet-odds {
+        font-size: 0.65rem;
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    .game-container {
+        grid-template-columns: 150px 1fr;
+        gap: 3px;
+        padding: 3px;
+    }
+    
+    .dice-inputs {
+        gap: 8px;
+    }
+    
+    .dice-input-group {
+        padding: 3px 5px;
+        gap: 5px;
+    }
+    
+    .dice-selector {
+        gap: 3px;
+    }
+    
+    .dice-btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .dice-input-group label {
+        font-size: 0.8rem;
+        min-width: 30px;
+    }
+    
+    .score-section {
+        gap: 8px;
+    }
+    
+    .score-card {
+        gap: 6px;
+        padding: 4px 10px;
+    }
+    
+    .score-card h2 {
+        font-size: 0.85rem;
+    }
+    
+    .score-display {
+        font-size: 1.3rem;
+        min-width: 45px;
+    }
+    
+    .score-btn {
+        min-width: 35px;
+        height: 20px;
+        font-size: 0.6rem;
+        padding: 2px 4px;
+    }
+    
+    .double-grid {
+        gap: 1px;
+    }
+    
+    .bet-box.double {
+        padding: 2px;
+    }
+    
+    .double-dice .dice {
+        width: 20px;
+        height: 20px;
+        padding: 1.5px;
+        border-radius: 3px;
+    }
+    
+    .double-dice .dot {
+        width: 3px;
+        height: 3px;
+    }
+    
+    .dice {
+        width: 24px;
+        height: 24px;
+        padding: 2px;
+        border-radius: 4px;
+    }
+    
+    .dice .dot {
+        width: 3px;
+        height: 3px;
+    }
+    
+    .double-dice {
+        gap: 1px;
+    }
+    
+    .betting-table {
+        padding: 5px;
+        gap: 5px;
+    }
+    
+    .top-bets {
+        gap: 4px;
+    }
+    
+    .total-grid {
+        gap: 3px;
+    }
+    
+    .triple-grid {
+        gap: 3px;
+    }
+    
+    .single-grid {
+        gap: 3px;
+    }
+    
+    .bet-odds {
+        font-size: 0.6rem;
+    }
+    
+    .bet-number {
+        font-size: 1rem;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .game-container {
+        grid-template-columns: 150px 1fr;
+        gap: 2px;
+        padding: 2px;
+    }
+    
+    .left-panel {
+        padding: 6px 12px;
+        gap: 10px;
+    }
+    
+    .dice-inputs {
+        gap: 6px;
+    }
+    
+    .dice-input-group {
+        padding: 3px 4px;
+        gap: 4px;
+    }
+    
+    .dice-selector {
+        gap: 2px;
+    }
+    
+    .dice-btn {
+        width: 26px;
+        height: 26px;
+    }
+    
+    .dice-input-group label {
+        font-size: 0.75rem;
+        min-width: 28px;
+    }
+    
+    .dice-input-section h3 {
+        font-size: 0.8rem;
+    }
+    
+    .score-section {
+        gap: 6px;
+    }
+    
+    .score-card {
+        gap: 5px;
+        padding: 3px 8px;
+    }
+    
+    .score-card h2 {
+        font-size: 0.8rem;
+    }
+    
+    /* 双骰组合压缩 */
+    .double-grid {
+        gap: 1px;
+    }
+    
+    .bet-box.double {
+        padding: 2px;
+    }
+    
+    .double-dice .dice {
+        width: 18px;
+        height: 18px;
+        padding: 1px;
+    }
+    
+    .double-dice .dot {
+        width: 2.5px;
+        height: 2.5px;
+    }
+    
+    .bet-odds {
+        font-size: 0.5rem;
+    }
+    
+    /* 历史面板优化 */
+    .history-item {
+        grid-template-columns: 28px max-content max-content max-content;
+    }
+    
+    .history-dice-nums {
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .history-total {
+        font-size: 1.1rem;
+    }
+    
+    .history-size {
+        font-size: 0.95rem;
+    }
+    
+    .score-display {
+        font-size: 1.2rem;
+        min-width: 40px;
+    }
+    
+    .score-btn {
+        min-width: 32px;
+        height: 18px;
+        font-size: 0.55rem;
+        padding: 2px 3px;
+    }
+    
+    .score-controls {
+        gap: 2px;
+    }
+    
+    .double-grid {
+        gap: 1px;
+    }
+    
+    .dice {
+        width: 22px;
+        height: 22px;
+        padding: 2px;
+        border-radius: 3px;
+    }
+    
+    .dice .dot {
+        width: 3px;
+        height: 3px;
+    }
+    
+    .double-dice, .pair-dice, .triple-dice {
+        gap: 1px;
+    }
+    
+    .betting-table {
+        padding: 4px;
+        gap: 4px;
+    }
+    
+    .top-bets {
+        gap: 3px;
+    }
+    
+    .total-grid, .triple-grid, .single-grid {
+        gap: 2px;
+    }
+    
+    .bet-odds {
+        font-size: 0.55rem;
+        margin-top: 1px;
+    }
+    
+    .bet-number {
+        font-size: 0.95rem;
+    }
+    
+    .bet-name {
+        font-size: 1.2rem;
+    }
+}
+
+/* 超小屏幕适配 */
+@media screen and (max-width: 900px) {
+    .score-section {
+        gap: 8px;
+    }
+    
+    .score-card {
+        flex: 1 1 100%;
+        min-width: 200px;
+    }
+    
+    /* 双骰组合进一步压缩 */
+    .double-grid {
+        gap: 0.5px;
+    }
+    
+    .bet-box.double {
+        padding: 1px;
+        min-height: 45px;
+    }
+    
+    .double-dice {
+        gap: 1px;
+    }
+    
+    .double-dice .dice {
+        width: 16px;
+        height: 16px;
+        padding: 0.5px;
+        border-radius: 2px;
+    }
+    
+    .double-dice .dot {
+        width: 2px;
+        height: 2px;
+    }
+    
+    .bet-odds {
+        font-size: 0.45rem;
+        margin-top: 1px;
+    }
+    
+    /* 历史面板进一步优化 */
+    .history-item {
+        grid-template-columns: 26px max-content max-content max-content;
+    }
+    
+    .history-round {
+        font-size: 0.7rem;
+    }
+    
+    .history-dice-nums {
+        font-size: 0.9rem;
+        letter-spacing: 0px;
+    }
+    
+    .history-total {
+        font-size: 1rem;
+    }
+    
+    .history-size {
+        font-size: 0.9rem;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .header {
+        flex-wrap: wrap;
+        padding: 8px 15px;
+        gap: 15px;
+    }
+    
+    .title {
+        font-size: 1.5rem;
+        flex-basis: 100%;
+        text-align: center;
+    }
+    
+    .header-chip-section {
+        flex: 1 1 100%;
+        order: 3;
+    }
+    
+    .score-section {
+        flex: 1 1 100%;
+        gap: 10px;
+        order: 2;
+    }
+    
+    .score-card {
+        flex: 1 1 calc(50% - 5px);
+        min-width: 0;
+    }
+}
+
+/* 骰子1: 中心 */
+.dice[data-value="1"] .dot:nth-child(5) { 
+    display: block;
+    grid-area: 2 / 2; 
+}
+
+/* 骰子2: 左上和右下 */
+.dice[data-value="2"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="2"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}
+
+/* 骰子3: 左上、中心、右下 */
+.dice[data-value="3"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="3"] .dot:nth-child(5) { 
+    display: block;
+    grid-area: 2 / 2; 
+}
+.dice[data-value="3"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}
+
+/* 骰子4: 四角 */
+.dice[data-value="4"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="4"] .dot:nth-child(2) { 
+    display: block;
+    grid-area: 1 / 3; 
+}
+.dice[data-value="4"] .dot:nth-child(4) { 
+    display: block;
+    grid-area: 3 / 1; 
+}
+.dice[data-value="4"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}
+
+/* 骰子5: 四角 + 中心 */
+.dice[data-value="5"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="5"] .dot:nth-child(2) { 
+    display: block;
+    grid-area: 1 / 3; 
+}
+.dice[data-value="5"] .dot:nth-child(4) { 
+    display: block;
+    grid-area: 3 / 1; 
+}
+.dice[data-value="5"] .dot:nth-child(5) { 
+    display: block;
+    grid-area: 2 / 2; 
+}
+.dice[data-value="5"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}
+
+/* 骰子6: 两列六个点 */
+.dice[data-value="6"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="6"] .dot:nth-child(2) { 
+    display: block;
+    grid-area: 1 / 3; 
+}
+.dice[data-value="6"] .dot:nth-child(3) { 
+    display: block;
+    grid-area: 2 / 1; 
+}
+.dice[data-value="6"] .dot:nth-child(4) { 
+    display: block;
+    grid-area: 2 / 3; 
+}
+.dice[data-value="6"] .dot:nth-child(5) { 
+    display: block;
+    grid-area: 3 / 1; 
+}
+.dice[data-value="6"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>骰宝记分板</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 顶部标题、筹码和计分 -->
+        <header class="header">
+            <h1 class="title">骰 宝</h1>
+            
+            <!-- 筹码选择移到这里 -->
+            <div class="header-chip-section">
+                <div class="chip-selector">
+                    <div class="chip" data-value="10">10</div>
+                    <div class="chip" data-value="30">30</div>
+                    <div class="chip selected" data-value="50">50</div>
+                    <div class="chip" data-value="100">100</div>
+                    <div class="chip" data-value="300">300</div>
+                    <div class="chip" data-value="500">500</div>
+                </div>
+                <div class="header-bet-info">
+                    <span>下注: <strong id="totalBetDisplay">0</strong></span>
+                    <button class="header-clear-btn" onclick="clearAllBets()">清除</button>
+                </div>
+            </div>
+
+            <div class="score-section">
+                <div class="score-card banker">
+                    <h2>庄</h2>
+                    <div class="score-display" id="bankerBalance">500</div>
+                    <div class="score-controls">
+                        <button class="score-btn minus" onclick="adjustBalance('banker', -100)">-100</button>
+                        <button class="score-btn plus" onclick="adjustBalance('banker', 100)">+100</button>
+                        <button class="score-btn reset" onclick="resetBalance('banker')">重置</button>
+                    </div>
+                </div>
+                <div class="score-card player">
+                    <h2>闲</h2>
+                    <div class="score-display" id="playerBalance">500</div>
+                    <div class="score-controls">
+                        <button class="score-btn minus" onclick="adjustBalance('player', -100)">-100</button>
+                        <button class="score-btn plus" onclick="adjustBalance('player', 100)">+100</button>
+                        <button class="score-btn reset" onclick="resetBalance('player')">重置</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 左侧面板：现在更宽敞了 -->
+            <div class="left-panel">
+                <!-- 骰子输入 -->
+                <div class="dice-input-section">
+                    <h3>输入骰子点数</h3>
+                    <div class="dice-inputs">
+                        <div class="dice-input-group" id="group1">
+                            <label>骰1</label>
+                            <div class="dice-selector" id="dice1">
+                                <button class="dice-btn" data-value="1">⚀</button>
+                                <button class="dice-btn" data-value="2">⚁</button>
+                                <button class="dice-btn" data-value="3">⚂</button>
+                                <button class="dice-btn" data-value="4">⚃</button>
+                                <button class="dice-btn" data-value="5">⚄</button>
+                                <button class="dice-btn" data-value="6">⚅</button>
+                            </div>
+                        </div>
+                        <div class="dice-input-group" id="group2">
+                            <label>骰2</label>
+                            <div class="dice-selector" id="dice2">
+                                <button class="dice-btn" data-value="1">⚀</button>
+                                <button class="dice-btn" data-value="2">⚁</button>
+                                <button class="dice-btn" data-value="3">⚂</button>
+                                <button class="dice-btn" data-value="4">⚃</button>
+                                <button class="dice-btn" data-value="5">⚄</button>
+                                <button class="dice-btn" data-value="6">⚅</button>
+                            </div>
+                        </div>
+                        <div class="dice-input-group" id="group3">
+                            <label>骰3</label>
+                            <div class="dice-selector" id="dice3">
+                                <button class="dice-btn" data-value="1">⚀</button>
+                                <button class="dice-btn" data-value="2">⚁</button>
+                                <button class="dice-btn" data-value="3">⚂</button>
+                                <button class="dice-btn" data-value="4">⚃</button>
+                                <button class="dice-btn" data-value="5">⚄</button>
+                                <button class="dice-btn" data-value="6">⚅</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-preview">
+                        <div class="preview-dice" id="previewDice">
+                            <span class="preview-die">?</span>
+                            <span class="preview-die">?</span>
+                            <span class="preview-die">?</span>
+                        </div>
+                        <div class="preview-info">
+                            <span class="preview-total">总点数: <strong id="previewTotal">-</strong></span>
+                            <span class="preview-type" id="previewType">-</span>
+                        </div>
+                    </div>
+                    <button class="confirm-btn" id="confirmBtn" onclick="confirmResult()">确认开奖</button>
+                </div>
+            </div>
+
+            <!-- 押注区域 -->
+            <div class="betting-table">
+                <!-- 第一行：小 + 双围 + 大 -->
+                <div class="bet-section top-bets">
+                    <div class="bet-box big-small" data-bet="small" data-odds="1">
+                        <span class="bet-name">小</span>
+                        <span class="bet-range">4-10</span>
+                        <span class="bet-odds">1赔1</span>
+                    </div>
+                    <div class="bet-box pair pair-1" data-bet="pair-1" data-odds="8">
+                        <div class="pair-dice">1 1</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-2" data-bet="pair-2" data-odds="8">
+                        <div class="pair-dice">2 2</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-3" data-bet="pair-3" data-odds="8">
+                        <div class="pair-dice">3 3</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-4" data-bet="pair-4" data-odds="8">
+                        <div class="pair-dice">4 4</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-5" data-bet="pair-5" data-odds="8">
+                        <div class="pair-dice">5 5</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-6" data-bet="pair-6" data-odds="8">
+                        <div class="pair-dice">6 6</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box big-small" data-bet="big" data-odds="1">
+                        <span class="bet-name">大</span>
+                        <span class="bet-range">11-17</span>
+                        <span class="bet-odds">1赔1</span>
+                    </div>
+                </div>
+
+                <!-- 双骰子组合 -->
+                <div class="bet-section">
+                    <div class="double-grid">
+                        <div class="bet-box double" data-bet="double-1-2" data-odds="5"><div class="double-dice">1 2</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-1-3" data-odds="5"><div class="double-dice">1 3</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-1-4" data-odds="5"><div class="double-dice">1 4</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-1-5" data-odds="5"><div class="double-dice">1 5</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-1-6" data-odds="5"><div class="double-dice">1 6</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-2-3" data-odds="5"><div class="double-dice">2 3</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-2-4" data-odds="5"><div class="double-dice">2 4</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-2-5" data-odds="5"><div class="double-dice">2 5</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-2-6" data-odds="5"><div class="double-dice">2 6</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-3-4" data-odds="5"><div class="double-dice">3 4</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-3-5" data-odds="5"><div class="double-dice">3 5</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-3-6" data-odds="5"><div class="double-dice">3 6</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-4-5" data-odds="5"><div class="double-dice">4 5</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-4-6" data-odds="5"><div class="double-dice">4 6</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-5-6" data-odds="5"><div class="double-dice">5 6</div><span class="bet-odds">1赔5</span></div>
+                    </div>
+                </div>
+
+                <!-- 第二行：点数4-17 -->
+                <div class="bet-section">
+                    <div class="total-grid">
+                        <div class="bet-box total" data-bet="total-4" data-odds="60"><span class="bet-number">4</span><span class="bet-odds">1赔60</span></div>
+                        <div class="bet-box total" data-bet="total-5" data-odds="30"><span class="bet-number">5</span><span class="bet-odds">1赔30</span></div>
+                        <div class="bet-box total" data-bet="total-6" data-odds="18"><span class="bet-number">6</span><span class="bet-odds">1赔18</span></div>
+                        <div class="bet-box total" data-bet="total-7" data-odds="12"><span class="bet-number">7</span><span class="bet-odds">1赔12</span></div>
+                        <div class="bet-box total" data-bet="total-8" data-odds="8"><span class="bet-number">8</span><span class="bet-odds">1赔8</span></div>
+                        <div class="bet-box total" data-bet="total-9" data-odds="6"><span class="bet-number">9</span><span class="bet-odds">1赔6</span></div>
+                        <div class="bet-box total" data-bet="total-10" data-odds="6"><span class="bet-number">10</span><span class="bet-odds">1赔6</span></div>
+                        <div class="bet-box total" data-bet="total-11" data-odds="6"><span class="bet-number">11</span><span class="bet-odds">1赔6</span></div>
+                        <div class="bet-box total" data-bet="total-12" data-odds="6"><span class="bet-number">12</span><span class="bet-odds">1赔6</span></div>
+                        <div class="bet-box total" data-bet="total-13" data-odds="8"><span class="bet-number">13</span><span class="bet-odds">1赔8</span></div>
+                        <div class="bet-box total" data-bet="total-14" data-odds="12"><span class="bet-number">14</span><span class="bet-odds">1赔12</span></div>
+                        <div class="bet-box total" data-bet="total-15" data-odds="18"><span class="bet-number">15</span><span class="bet-odds">1赔18</span></div>
+                        <div class="bet-box total" data-bet="total-16" data-odds="30"><span class="bet-number">16</span><span class="bet-odds">1赔30</span></div>
+                        <div class="bet-box total" data-bet="total-17" data-odds="60"><span class="bet-number">17</span><span class="bet-odds">1赔60</span></div>
+                    </div>
+                </div>
+
+                <!-- 第三行：围骰 -->
+                <div class="bet-section">
+                    <div class="triple-grid">
+                        <div class="bet-box triple" data-bet="triple-1" data-odds="150"><div class="triple-dice">1 1 1</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple" data-bet="triple-2" data-odds="150"><div class="triple-dice">2 2 2</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple" data-bet="triple-3" data-odds="150"><div class="triple-dice">3 3 3</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple any-triple" data-bet="any-triple" data-odds="24"><span class="bet-name" style="font-size:0.8rem">全围</span><span class="bet-odds">1赔24</span></div>
+                        <div class="bet-box triple" data-bet="triple-4" data-odds="150"><div class="triple-dice">4 4 4</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple" data-bet="triple-5" data-odds="150"><div class="triple-dice">5 5 5</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple" data-bet="triple-6" data-odds="150"><div class="triple-dice">6 6 6</div><span class="bet-odds">1赔150</span></div>
+                    </div>
+                </div>
+
+                <!-- 第四行：单骰 -->
+                <div class="bet-section">
+                    <div class="single-grid">
+                        <div class="bet-box single" data-bet="single-1" data-odds="1">
+                            <div class="dice" data-value="1"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-2" data-odds="1">
+                            <div class="dice" data-value="2"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-3" data-odds="1">
+                            <div class="dice" data-value="3"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-4" data-odds="1">
+                            <div class="dice" data-value="4"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-5" data-odds="1">
+                            <div class="dice" data-value="5"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-6" data-odds="1">
+                            <div class="dice" data-value="6"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="history-panel">
+            <div class="history-header">
+                <h3>历史</h3>
+                <button class="clear-history-btn" onclick="clearHistory()">清空</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-history">暂无记录</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dice-helper.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
