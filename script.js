@@ -1062,36 +1062,49 @@ function saveState() {
 function loadState() {
     const saved = localStorage.getItem('sicBoState');
     if (saved) {
-        const loaded = JSON.parse(saved);
-        state.bankerBalance = loaded.bankerBalance || 500;
-        state.playerBalance = loaded.playerBalance || 500;
-        state.history = loaded.history || [];
-        state.currentChip = loaded.currentChip || 50;
-        
-        // 加载游戏模式
-        state.gameMode = loaded.gameMode || 'single';
-        state.playerCount = loaded.playerCount || 1;
-        state.players = loaded.players || [];
-        state.currentPlayerId = loaded.currentPlayerId || 1;
-        
-        // 如果是多人模式但没有玩家数据，初始化
-        if (state.gameMode === 'multi' && state.players.length === 0) {
-            initializeMultiPlayers(state.playerCount);
-        }
-        
-        // 确保 bets 格式正确（数组格式）
-        state.bets = {};
-        if (loaded.bets) {
-            Object.keys(loaded.bets).forEach(key => {
-                const val = loaded.bets[key];
-                // 如果是数组就直接用，否则转换
-                if (Array.isArray(val)) {
-                    state.bets[key] = val;
-                } else if (typeof val === 'number' && val > 0) {
-                    // 旧格式：数字，转换为数组
-                    state.bets[key] = [val];
-                }
-            });
+        try {
+            const loaded = JSON.parse(saved);
+            state.bankerBalance = loaded.bankerBalance || 500;
+            state.playerBalance = loaded.playerBalance || 500;
+            state.history = Array.isArray(loaded.history) ? loaded.history : [];
+            state.currentChip = loaded.currentChip || 50;
+            
+            // 加载游戏模式
+            state.gameMode = loaded.gameMode || 'single';
+            state.playerCount = loaded.playerCount || 1;
+            
+            // 确保 players 是一个数组
+            if (Array.isArray(loaded.players)) {
+                state.players = loaded.players.filter(p => p && typeof p === 'object');
+            } else {
+                state.players = [];
+            }
+            
+            state.currentPlayerId = loaded.currentPlayerId || (state.players.length > 0 ? state.players[0].id : 1);
+            
+            // 如果是多人模式但没有玩家数据，初始化
+            if (state.gameMode === 'multi' && state.players.length === 0) {
+                initializeMultiPlayers(state.playerCount);
+            }
+            
+            // 确保 bets 格式正确（数组格式）
+            state.bets = {};
+            if (loaded.bets && typeof loaded.bets === 'object') {
+                Object.keys(loaded.bets).forEach(key => {
+                    const val = loaded.bets[key];
+                    // 如果是数组就直接用，否则转换
+                    if (Array.isArray(val)) {
+                        state.bets[key] = val;
+                    } else if (typeof val === 'number' && val > 0) {
+                        // 旧格式：数字，转换为数组
+                        state.bets[key] = [val];
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Error loading state:', e);
+            // 清除损坏的数据
+            localStorage.removeItem('sicBoState');
         }
     }
 }
@@ -1178,8 +1191,15 @@ function confirmModeChange() {
 // 初始化多人模式玩家数据
 function initializeMultiPlayers(count) {
     state.players = [];
-    for (let i = 0; i < count; i++) {
+    const playerCount = Math.min(count, PLAYER_COLORS.length); // 确保不超过颜色配置数量
+    
+    for (let i = 0; i < playerCount; i++) {
         const colorConfig = PLAYER_COLORS[i];
+        if (!colorConfig) {
+            console.error(`No color config for player ${i + 1}`);
+            continue;
+        }
+        
         state.players.push({
             id: colorConfig.id,
             name: colorConfig.name,
@@ -1190,7 +1210,10 @@ function initializeMultiPlayers(count) {
             currentChip: 50
         });
     }
-    state.currentPlayerId = state.players[0].id; // 默认选中第一个玩家
+    
+    if (state.players.length > 0) {
+        state.currentPlayerId = state.players[0].id; // 默认选中第一个玩家
+    }
     state.bets = {}; // 清空押注
 }
 
