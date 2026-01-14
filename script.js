@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initGameMode();  // 初始化游戏模式
     updateDisplay();
     syncChipSelection(); // 同步筹码选择状态
+    updatePreview(); // 更新预览和按钮状态
 });
 
 // 初始化骰子选择器
@@ -68,6 +69,7 @@ function initDiceSelectors() {
                 if (group) group.classList.add('has-selection');
                 
                 updatePreview();
+                updateConfirmButtonState();
             });
         });
     }
@@ -405,6 +407,8 @@ function updatePreview() {
         dieElements[index].textContent = value !== null ? diceSymbols[value - 1] : '?';
     });
     
+    const confirmBtn = document.getElementById('confirmBtn');
+    
     if (dice.every(d => d !== null)) {
         const total = dice.reduce((a, b) => a + b, 0);
         const isTriple = dice[0] === dice[1] && dice[1] === dice[2];
@@ -417,11 +421,21 @@ function updatePreview() {
         typeText += total % 2 === 1 ? '单' : '双';
         
         previewType.textContent = typeText;
-        document.getElementById('confirmBtn').disabled = false;
+        
+        // 启用按钮
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.classList.remove('disabled');
+        }
     } else {
         previewTotal.textContent = '-';
         previewType.textContent = '-';
-        document.getElementById('confirmBtn').disabled = true;
+        
+        // 禁用按钮并添加置灰样式
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.classList.add('disabled');
+        }
     }
 }
 
@@ -820,6 +834,7 @@ function resetDiceSelection() {
         group.classList.remove('has-selection');
     });
     updatePreview();
+    updateConfirmButtonState();
 }
 
 // 调整余额

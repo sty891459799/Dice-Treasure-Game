@@ -470,10 +470,28 @@ body::before {
         inset 0 2px 5px rgba(0,0,0,0.3);
 }
 
-.confirm-btn:disabled {
-    opacity: 0.5;
+.confirm-btn:disabled,
+.confirm-btn.disabled {
+    background: linear-gradient(180deg, #7f8c8d 0%, #95a5a6 50%, #bdc3c7 100%) !important;
+    color: #d5d8dc;
+    opacity: 0.6;
     cursor: not-allowed;
-    transform: none;
+    transform: none !important;
+    box-shadow: 
+        0 2px 0 #566573,
+        0 3px 8px rgba(127, 140, 141, 0.3),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+    filter: grayscale(100%);
+    pointer-events: none;
+}
+
+.confirm-btn:disabled:hover,
+.confirm-btn.disabled:hover {
+    transform: none !important;
+    box-shadow: 
+        0 2px 0 #566573,
+        0 3px 8px rgba(127, 140, 141, 0.3),
+        inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
 /* 押注棋盘 */
