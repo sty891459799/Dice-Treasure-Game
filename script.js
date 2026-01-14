@@ -140,7 +140,19 @@ function initBetBoxes() {
             if (!isLongPress) {
                 // 短按：添加筹码
                 e.preventDefault();
-                placeBet(betType, state.currentChip);
+                
+                // 获取当前使用的筹码值
+                let chipValue;
+                if (state.gameMode === 'multi') {
+                    // 多人模式：使用当前玩家的筹码
+                    const currentPlayer = state.players.find(p => p.id === state.currentPlayerId);
+                    chipValue = currentPlayer ? currentPlayer.currentChip : 50;
+                } else {
+                    // 单人模式：使用全局筹码
+                    chipValue = state.currentChip;
+                }
+                
+                placeBet(betType, chipValue);
             }
             isLongPress = false;
         };
