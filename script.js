@@ -1129,16 +1129,7 @@ function openModeModal() {
     } else {
         // 如果当前是多人模式，点击按钮直接切换回单人模式
         if (confirm('切换到单人模式将清除当前游戏数据，是否继续？')) {
-            state.gameMode = 'single';
-            state.playerCount = 1;
-            
-            // 更新图标
-            const modeIcon = document.getElementById('modeIcon');
-            modeIcon.textContent = '👤';
-            
-            // 重新加载界面（这里暂时只是提示，后续会实现界面切换）
-            alert('已切换到单人模式');
-            saveState();
+            switchToSingleMode();
         }
     }
 }
@@ -1233,6 +1224,49 @@ function switchToMultiMode() {
     
     // 更新显示
     updateDisplay();
+}
+
+// 切换到单人模式界面
+function switchToSingleMode() {
+    // 更新状态
+    state.gameMode = 'single';
+    state.playerCount = 1;
+    state.players = [];
+    state.currentPlayerId = null;
+    state.bets = {}; // 清空押注
+    
+    // 更新图标
+    const modeIcon = document.getElementById('modeIcon');
+    if (modeIcon) {
+        modeIcon.textContent = '👤';
+    }
+    
+    // 显示单人模式元素
+    const chipSection = document.querySelector('.header-chip-section.single-mode-section');
+    const scoreSection = document.querySelector('.score-section.single-mode-section');
+    if (chipSection) chipSection.style.display = 'flex';
+    if (scoreSection) scoreSection.style.display = 'flex';
+    
+    // 隐藏多人模式元素
+    const multiSection = document.getElementById('multiPlayersSection');
+    if (multiSection) {
+        multiSection.style.display = 'none';
+        multiSection.innerHTML = ''; // 清空内容
+    }
+    
+    // 清空所有押注显示
+    document.querySelectorAll('.chip-stack').forEach(stack => {
+        stack.innerHTML = '';
+    });
+    document.querySelectorAll('.bet-box').forEach(box => {
+        box.classList.remove('has-bet');
+    });
+    
+    // 更新显示
+    updateDisplay();
+    
+    // 保存状态
+    saveState();
 }
 
 // 渲染多人模式玩家UI
