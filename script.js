@@ -1,13 +1,33 @@
 // 骰宝记分板
 const diceSymbols = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
+// 玩家颜色配置
+const PLAYER_COLORS = [
+    { id: 1, name: '闲家1', color: '#f44336', chipColor: '#e53935', lightColor: '#ef5350' },  // 红色
+    { id: 2, name: '闲家2', color: '#2196F3', chipColor: '#1976D2', lightColor: '#42A5F5' },  // 蓝色
+    { id: 3, name: '闲家3', color: '#4CAF50', chipColor: '#388E3C', lightColor: '#66BB6A' },  // 绿色
+    { id: 4, name: '闲家4', color: '#FFC107', chipColor: '#FFA000', lightColor: '#FFCA28' },  // 黄色
+    { id: 5, name: '闲家5', color: '#9C27B0', chipColor: '#7B1FA2', lightColor: '#AB47BC' },  // 紫色
+    { id: 6, name: '闲家6', color: '#FF5722', chipColor: '#E64A19', lightColor: '#FF7043' }   // 橙色
+];
+
 // 游戏状态
 let state = {
+    gameMode: 'single',  // 'single' 或 'multi'
+    playerCount: 1,      // 单人模式=1，多人模式=2-6
     bankerBalance: 500,  // 庄家筹码余额
+    
+    // 单人模式数据
     playerBalance: 500,  // 闲家筹码余额
+    
+    // 多人模式数据
+    players: [],         // 多个玩家的数据 [{ id, name, balance, color, currentChip }]
+    currentPlayerId: null, // 当前选中的玩家ID
+    
     selectedDice: [null, null, null],
     history: [],
-    bets: {},        // 存储每个位置的筹码数组，如 { "big": [50, 100, 30], "small": [10] }
+    bets: {},        // 单人: { "big": [50, 100], "small": [10] }
+                     // 多人: { "big": [{playerId: 1, amount: 50}, {playerId: 2, amount: 100}] }
     currentChip: 50
 };
 
@@ -155,22 +175,56 @@ function placeBet(betType, amount) {
     }
     
     if (amount > 0) {
-        // 检查闲家余额是否足够
-        if (state.playerBalance < amount) {
-            alert('闲家余额不足！');
-            return;
+        if (state.gameMode === 'single') {
+            // 单人模式逻辑
+            if (state.playerBalance < amount) {
+                alert('闲家余额不足！');
+                return;
+            }
+            
+            state.bets[betType].push(amount);
+            state.playerBalance -= amount;
+        } else {
+            // 多人模式逻辑
+            const currentPlayer = state.players.find(p => p.id === state.currentPlayerId);
+            if (!currentPlayer) {
+                alert('请先选择一个玩家！');
+                return;
+            }
+            
+            if (currentPlayer.balance < amount) {
+                alert(`${currentPlayer.name}余额不足！`);
+                return;
+            }
+            
+            // 记录玩家ID和金额
+            state.bets[betType].push({
+                playerId: currentPlayer.id,
+                amount: amount,
+                color: currentPlayer.color,
+                chipColor: currentPlayer.chipColor
+            });
+            
+            // 扣除该玩家积分
+            currentPlayer.balance -= amount;
+            document.getElementById(`player${currentPlayer.id}Balance`).textContent = currentPlayer.balance;
         }
-        
-        // 添加筹码
-        state.bets[betType].push(amount);
-        
-        // 扣除闲家积分
-        state.playerBalance -= amount;
     } else {
         // 移除最后一个筹码并退还积分
-        const removedChip = state.bets[betType].pop();
-        if (removedChip) {
-            state.playerBalance += removedChip;
+        if (state.gameMode === 'single') {
+            const removedChip = state.bets[betType].pop();
+            if (removedChip) {
+                state.playerBalance += removedChip;
+            }
+        } else {
+            const removedChip = state.bets[betType].pop();
+            if (removedChip) {
+                const player = state.players.find(p => p.id === removedChip.playerId);
+                if (player) {
+                    player.balance += removedChip.amount;
+                    document.getElementById(`player${player.id}Balance`).textContent = player.balance;
+                }
+            }
         }
     }
     
@@ -187,9 +241,20 @@ function placeBet(betType, amount) {
 // 清除单个区域的筹码
 function clearBet(betType) {
     if (state.bets[betType]) {
-        // 退还所有筹码的积分
-        const totalBet = state.bets[betType].reduce((sum, chip) => sum + chip, 0);
-        state.playerBalance += totalBet;
+        if (state.gameMode === 'single') {
+            // 单人模式：退还所有筹码的积分
+            const totalBet = state.bets[betType].reduce((sum, chip) => sum + chip, 0);
+            state.playerBalance += totalBet;
+        } else {
+            // 多人模式：退还每个玩家的筹码
+            state.bets[betType].forEach(chipData => {
+                const player = state.players.find(p => p.id === chipData.playerId);
+                if (player) {
+                    player.balance += chipData.amount;
+                    document.getElementById(`player${player.id}Balance`).textContent = player.balance;
+                }
+            });
+        }
         
         delete state.bets[betType];
         updateBetDisplay();
@@ -200,13 +265,26 @@ function clearBet(betType) {
 
 // 清除所有下注
 function clearAllBets() {
-    // 退还所有筹码的积分
-    let totalBet = 0;
-    Object.keys(state.bets).forEach(betType => {
-        const betAmount = state.bets[betType].reduce((sum, chip) => sum + chip, 0);
-        totalBet += betAmount;
-    });
-    state.playerBalance += totalBet;
+    if (state.gameMode === 'single') {
+        // 单人模式：退还所有筹码的积分
+        let totalBet = 0;
+        Object.keys(state.bets).forEach(betType => {
+            const betAmount = state.bets[betType].reduce((sum, chip) => sum + chip, 0);
+            totalBet += betAmount;
+        });
+        state.playerBalance += totalBet;
+    } else {
+        // 多人模式：退还每个玩家的筹码
+        Object.keys(state.bets).forEach(betType => {
+            state.bets[betType].forEach(chipData => {
+                const player = state.players.find(p => p.id === chipData.playerId);
+                if (player) {
+                    player.balance += chipData.amount;
+                    document.getElementById(`player${player.id}Balance`).textContent = player.balance;
+                }
+            });
+        });
+    }
     
     state.bets = {};
     updateBetDisplay();
@@ -246,19 +324,59 @@ function updateBetDisplay() {
             // 最多显示5个筹码，多余的堆叠
             const displayChips = chips.slice(-5);
             
-            displayChips.forEach(chipValue => {
-                const chip = document.createElement('div');
-                chip.className = `chip-item chip-${chipValue}`;
-                chip.textContent = chipValue >= 1000 ? '1K' : chipValue;
-                chipStack.appendChild(chip);
-            });
-            
-            // 显示总金额
-            const total = chips.reduce((sum, val) => sum + val, 0);
-            const totalDiv = document.createElement('div');
-            totalDiv.className = 'chip-total';
-            totalDiv.textContent = formatChipAmount(total);
-            chipStack.appendChild(totalDiv);
+            if (state.gameMode === 'single') {
+                // 单人模式：显示筹码面值
+                displayChips.forEach(chipValue => {
+                    const chip = document.createElement('div');
+                    chip.className = `chip-item chip-${chipValue}`;
+                    chip.textContent = chipValue >= 1000 ? '1K' : chipValue;
+                    chipStack.appendChild(chip);
+                });
+                
+                // 显示总金额
+                const total = chips.reduce((sum, val) => sum + val, 0);
+                const totalDiv = document.createElement('div');
+                totalDiv.className = 'chip-total';
+                totalDiv.textContent = formatChipAmount(total);
+                chipStack.appendChild(totalDiv);
+            } else {
+                // 多人模式：按玩家分组显示
+                const playerGroups = {};
+                chips.forEach(chipData => {
+                    if (!playerGroups[chipData.playerId]) {
+                        playerGroups[chipData.playerId] = {
+                            chips: [],
+                            total: 0,
+                            color: chipData.color,
+                            chipColor: chipData.chipColor
+                        };
+                    }
+                    playerGroups[chipData.playerId].chips.push(chipData.amount);
+                    playerGroups[chipData.playerId].total += chipData.amount;
+                });
+                
+                // 为每个玩家显示筹码（最多显示3个筹码）
+                Object.values(playerGroups).forEach(group => {
+                    const displayPlayerChips = group.chips.slice(-3); // 每个玩家最多显示3个筹码
+                    
+                    displayPlayerChips.forEach(amount => {
+                        const chip = document.createElement('div');
+                        chip.className = 'chip-item';
+                        chip.textContent = amount >= 1000 ? '1K' : amount;
+                        chip.style.background = `radial-gradient(circle, ${group.color}, ${group.chipColor})`;
+                        chipStack.appendChild(chip);
+                    });
+                    
+                    // 显示该玩家的总额
+                    const totalDiv = document.createElement('div');
+                    totalDiv.className = 'chip-total';
+                    totalDiv.textContent = formatChipAmount(group.total);
+                    totalDiv.style.background = '#000';
+                    totalDiv.style.borderColor = group.color;
+                    totalDiv.style.color = group.color;
+                    chipStack.appendChild(totalDiv);
+                });
+            }
         } else {
             box.classList.remove('has-bet');
         }
@@ -418,6 +536,15 @@ function highlightWinningBets(dice, total, isTriple) {
 
 // 计算输赢并更新余额
 function calculateWinnings(dice, total, isTriple) {
+    if (state.gameMode === 'single') {
+        calculateSingleModeWinnings(dice, total, isTriple);
+    } else {
+        calculateMultiModeWinnings(dice, total, isTriple);
+    }
+}
+
+// 单人模式结算
+function calculateSingleModeWinnings(dice, total, isTriple) {
     let bankerWinnings = 0;  // 庄家输赢（正为赢，负为输）
     let playerWinnings = 0;  // 闲家输赢（正为赢，负为输）
     
@@ -536,6 +663,151 @@ function calculateWinnings(dice, total, isTriple) {
             }
         }
     }, 10000); // 等待10秒后再加积分
+}
+
+// 多人模式结算
+function calculateMultiModeWinnings(dice, total, isTriple) {
+    let bankerWinnings = 0;
+    const playerWinnings = {}; // { playerId: winAmount }
+    
+    // 初始化每个玩家的输赢
+    state.players.forEach(player => {
+        playerWinnings[player.id] = 0;
+    });
+    
+    // 遍历所有押注
+    Object.keys(state.bets).forEach(betKey => {
+        const betChips = state.bets[betKey];
+        if (!betChips || betChips.length === 0) return;
+        
+        // 获取赔率
+        const betBox = document.querySelector(`[data-bet="${betKey}"]`);
+        if (!betBox) return;
+        const odds = parseFloat(betBox.dataset.odds) || 1;
+        
+        // 判断是否中奖
+        const isWinning = checkWinning(betKey, dice, total, isTriple);
+        
+        // 遍历每个筹码
+        betChips.forEach(chipData => {
+            const betAmount = chipData.amount;
+            
+            if (isWinning) {
+                // 中奖：玩家赢得 本金 + 奖金
+                playerWinnings[chipData.playerId] += betAmount + (betAmount * odds);
+                bankerWinnings -= betAmount * odds;
+            } else {
+                // 未中奖：庄家赢得押注金额
+                bankerWinnings += betAmount;
+            }
+        });
+    });
+    
+    // 延迟更新余额，等待押注区闪烁结束（10秒后）
+    setTimeout(() => {
+        // 更新庄家余额并触发动画
+        if (bankerWinnings !== 0) {
+            state.bankerBalance += bankerWinnings;
+            const bankerBalanceDisplay = document.getElementById('bankerBalance');
+            if (bankerBalanceDisplay) {
+                bankerBalanceDisplay.textContent = state.bankerBalance;
+                
+                // 触发闪烁效果（不管增加还是减少）
+                bankerBalanceDisplay.classList.add('flash-increase');
+                setTimeout(() => {
+                    bankerBalanceDisplay.classList.remove('flash-increase');
+                }, 800);
+            }
+        }
+        
+        // 更新每个玩家的余额
+        state.players.forEach(player => {
+            const winAmount = playerWinnings[player.id];
+            if (winAmount !== 0) {
+                player.balance += winAmount;
+                
+                const balanceDisplay = document.getElementById(`player${player.id}Balance`);
+                if (balanceDisplay) {
+                    balanceDisplay.textContent = player.balance;
+                    
+                    // 触发闪烁效果（不管增加还是减少）
+                    balanceDisplay.classList.add('flash-increase');
+                    setTimeout(() => {
+                        balanceDisplay.classList.remove('flash-increase');
+                    }, 800);
+                }
+            }
+        });
+        
+        // 庄家余额闪烁
+        if (bankerWinnings > 0) {
+            const bankerDisplay = document.getElementById('bankerBalance');
+            if (bankerDisplay) {
+                bankerDisplay.textContent = state.bankerBalance;
+                bankerDisplay.classList.add('flash-increase');
+                setTimeout(() => {
+                    bankerDisplay.classList.remove('flash-increase');
+                }, 800);
+            }
+        } else {
+            document.getElementById('bankerBalance').textContent = state.bankerBalance;
+        }
+        
+        updateDisplay();
+        saveState();
+    }, 10000); // 等待10秒后再加积分
+}
+
+// 判断是否中奖（提取公共逻辑）
+function checkWinning(betKey, dice, total, isTriple) {
+    // 大小判断
+    if (betKey === 'big' && !isTriple && total >= 11 && total <= 17) return true;
+    if (betKey === 'small' && !isTriple && total >= 4 && total <= 10) return true;
+    
+    // 点数判断
+    if (betKey.startsWith('total-')) {
+        const targetTotal = parseInt(betKey.split('-')[1]);
+        if (total === targetTotal) return true;
+    }
+    
+    // 三围判断
+    if (betKey.startsWith('triple-')) {
+        const targetNum = parseInt(betKey.split('-')[1]);
+        if (isTriple && dice[0] === targetNum) return true;
+    }
+    
+    // 全围判断
+    if (betKey === 'any-triple' && isTriple) return true;
+    
+    // 单骰判断
+    if (betKey.startsWith('single-')) {
+        const targetNum = parseInt(betKey.split('-')[1]);
+        const count = dice.filter(d => d === targetNum).length;
+        if (count > 0) return true;
+    }
+    
+    // 双骰组合判断
+    if (betKey.startsWith('double-')) {
+        const [_, num1, num2] = betKey.split('-').map(Number);
+        const sortedDice = [...dice].sort((a, b) => a - b);
+        for (let i = 0; i < sortedDice.length; i++) {
+            for (let j = i + 1; j < sortedDice.length; j++) {
+                if ((sortedDice[i] === num1 && sortedDice[j] === num2) ||
+                    (sortedDice[i] === num2 && sortedDice[j] === num1)) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    // 双围判断
+    if (betKey.startsWith('pair-')) {
+        const targetNum = parseInt(betKey.split('-')[1]);
+        const count = dice.filter(d => d === targetNum).length;
+        if (count >= 2) return true;
+    }
+    
+    return false;
 }
 
 // 重置骰子选择
@@ -738,8 +1010,24 @@ function clearHistory() {
 
 // 更新显示
 function updateDisplay() {
-    document.getElementById('bankerBalance').textContent = state.bankerBalance;
-    document.getElementById('playerBalance').textContent = state.playerBalance;
+    // 更新单人模式的庄闲余额（只在单人模式显示时更新）
+    if (state.gameMode === 'single') {
+        const bankerEl = document.getElementById('bankerBalance');
+        const playerEl = document.getElementById('playerBalance');
+        if (bankerEl) bankerEl.textContent = state.bankerBalance;
+        if (playerEl) playerEl.textContent = state.playerBalance;
+    } else {
+        // 多人模式：更新每个玩家的余额
+        const bankerEl = document.getElementById('bankerBalance');
+        if (bankerEl) bankerEl.textContent = state.bankerBalance;
+        
+        state.players.forEach(player => {
+            const playerBalanceEl = document.getElementById(`player${player.id}Balance`);
+            if (playerBalanceEl) {
+                playerBalanceEl.textContent = player.balance;
+            }
+        });
+    }
     
     updateBetDisplay();
     
@@ -779,6 +1067,17 @@ function loadState() {
         state.playerBalance = loaded.playerBalance || 500;
         state.history = loaded.history || [];
         state.currentChip = loaded.currentChip || 50;
+        
+        // 加载游戏模式
+        state.gameMode = loaded.gameMode || 'single';
+        state.playerCount = loaded.playerCount || 1;
+        state.players = loaded.players || [];
+        state.currentPlayerId = loaded.currentPlayerId || 1;
+        
+        // 如果是多人模式但没有玩家数据，初始化
+        if (state.gameMode === 'multi' && state.players.length === 0) {
+            initializeMultiPlayers(state.playerCount);
+        }
         
         // 确保 bets 格式正确（数组格式）
         state.bets = {};
@@ -862,15 +1161,186 @@ function confirmModeChange() {
     state.gameMode = 'multi';
     state.playerCount = tempPlayerCount;
     
+    // 初始化多人模式玩家数据
+    initializeMultiPlayers(tempPlayerCount);
+    
     // 更新图标
     const modeIcon = document.getElementById('modeIcon');
     modeIcon.textContent = '👥';
     
-    // TODO: 这里将实现多人模式的界面切换
-    alert(`多人模式：${tempPlayerCount}个闲家\n功能开发中...`);
+    // 切换界面显示
+    switchToMultiMode();
     
     closeModeModal();
     saveState();
+}
+
+// 初始化多人模式玩家数据
+function initializeMultiPlayers(count) {
+    state.players = [];
+    for (let i = 0; i < count; i++) {
+        const colorConfig = PLAYER_COLORS[i];
+        state.players.push({
+            id: colorConfig.id,
+            name: colorConfig.name,
+            balance: 500,
+            color: colorConfig.color,
+            chipColor: colorConfig.chipColor,
+            lightColor: colorConfig.lightColor,
+            currentChip: 50
+        });
+    }
+    state.currentPlayerId = state.players[0].id; // 默认选中第一个玩家
+    state.bets = {}; // 清空押注
+}
+
+// 切换到多人模式界面
+function switchToMultiMode() {
+    // 隐藏单人模式元素
+    document.querySelectorAll('.single-mode-section').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // 显示多人模式元素
+    const multiSection = document.getElementById('multiPlayersSection');
+    multiSection.style.display = 'flex';
+    
+    // 生成玩家筹码区域UI
+    renderMultiPlayersUI();
+    
+    // 更新显示
+    updateDisplay();
+}
+
+// 渲染多人模式玩家UI
+function renderMultiPlayersUI() {
+    const container = document.getElementById('multiPlayersSection');
+    if (!container) {
+        console.error('multiPlayersSection container not found!');
+        return;
+    }
+    container.innerHTML = '';
+    
+    if (!state.players || state.players.length === 0) {
+        console.error('No players data!');
+        return;
+    }
+    
+    state.players.forEach(player => {
+        const row = document.createElement('div');
+        row.className = 'player-chip-row';
+        row.dataset.playerId = player.id;
+        row.style.color = player.lightColor;
+        
+        if (player.id === state.currentPlayerId) {
+            row.classList.add('active');
+        }
+        
+        row.innerHTML = `
+            <div class="player-info">
+                <div class="player-color-indicator" style="background: ${player.color};"></div>
+                <span class="player-name">${player.name}</span>
+            </div>
+            <div class="player-balance" id="player${player.id}Balance">${player.balance}</div>
+            <div class="player-chip-selector" id="player${player.id}Chips">
+                ${[10, 30, 50, 100, 300, 500].map(value => `
+                    <div class="chip ${value === player.currentChip ? 'selected' : ''}" 
+                         data-value="${value}"
+                         data-player-id="${player.id}"
+                         onclick="selectPlayerChip(${player.id}, ${value})"
+                         style="background: radial-gradient(circle at 30% 30%, ${player.lightColor}, ${player.chipColor});">
+                        ${value}
+                    </div>
+                `).join('')}
+            </div>
+            <div class="player-controls">
+                <button class="player-control-btn" onclick="adjustPlayerBalance(${player.id}, -100)">-100</button>
+                <button class="player-control-btn" onclick="adjustPlayerBalance(${player.id}, 100)">+100</button>
+                <button class="player-control-btn" onclick="resetPlayerBalance(${player.id})">重置</button>
+            </div>
+        `;
+        
+        // 点击整行选中该玩家
+        row.addEventListener('click', (e) => {
+            // 如果点击的是筹码或按钮，不触发行选择
+            if (!e.target.classList.contains('chip') && 
+                !e.target.classList.contains('player-control-btn')) {
+                selectPlayer(player.id);
+            }
+        });
+        
+        container.appendChild(row);
+    });
+}
+
+// 选择玩家
+function selectPlayer(playerId) {
+    state.currentPlayerId = playerId;
+    
+    // 更新UI
+    document.querySelectorAll('.player-chip-row').forEach(row => {
+        if (parseInt(row.dataset.playerId) === playerId) {
+            row.classList.add('active');
+        } else {
+            row.classList.remove('active');
+        }
+    });
+}
+
+// 选择玩家的筹码
+function selectPlayerChip(playerId, chipValue) {
+    const player = state.players.find(p => p.id === playerId);
+    if (player) {
+        player.currentChip = chipValue;
+        
+        // 自动选中该玩家
+        selectPlayer(playerId);
+        
+        // 更新该玩家的筹码选择UI
+        const chipSelector = document.getElementById(`player${playerId}Chips`);
+        chipSelector.querySelectorAll('.chip').forEach(chip => {
+            if (parseInt(chip.dataset.value) === chipValue) {
+                chip.classList.add('selected');
+            } else {
+                chip.classList.remove('selected');
+            }
+        });
+        
+        saveState();
+    }
+}
+
+// 调整玩家余额
+function adjustPlayerBalance(playerId, amount) {
+    const player = state.players.find(p => p.id === playerId);
+    if (player) {
+        player.balance = Math.max(0, player.balance + amount);
+        
+        // 更新显示
+        document.getElementById(`player${playerId}Balance`).textContent = player.balance;
+        
+        // 触发闪烁效果
+        if (amount > 0) {
+            const displayElement = document.getElementById(`player${playerId}Balance`);
+            displayElement.classList.add('flash-increase');
+            setTimeout(() => {
+                displayElement.classList.remove('flash-increase');
+            }, 800);
+        }
+        
+        saveState();
+        checkGameOver();
+    }
+}
+
+// 重置玩家余额
+function resetPlayerBalance(playerId) {
+    const player = state.players.find(p => p.id === playerId);
+    if (player) {
+        player.balance = 500;
+        document.getElementById(`player${playerId}Balance`).textContent = 500;
+        saveState();
+    }
 }
 
 // 初始化模式（在页面加载时调用）
@@ -882,6 +1352,11 @@ function initGameMode() {
     const modeIcon = document.getElementById('modeIcon');
     if (modeIcon) {
         modeIcon.textContent = state.gameMode === 'single' ? '👤' : '👥';
+    }
+    
+    // 如果是多人模式，恢复界面
+    if (state.gameMode === 'multi' && state.players && state.players.length > 0) {
+        switchToMultiMode();
     }
     
     // 初始化拖动功能

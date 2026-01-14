@@ -20,8 +20,8 @@
                 <span id="modeIcon">👤</span>
             </button>
             
-            <!-- 筹码选择移到这里 -->
-            <div class="header-chip-section">
+            <!-- 单人模式：筹码选择 -->
+            <div class="header-chip-section single-mode-section">
                 <div class="chip-selector">
                     <div class="chip" data-value="10">10</div>
                     <div class="chip" data-value="30">30</div>
@@ -35,8 +35,14 @@
                     <button class="header-clear-btn" onclick="clearAllBets()">清除</button>
                 </div>
             </div>
+            
+            <!-- 多人模式：玩家筹码区域 -->
+            <div class="multi-players-section" id="multiPlayersSection" style="display: none;">
+                <!-- 动态生成玩家筹码区域 -->
+            </div>
 
-            <div class="score-section">
+            <!-- 单人模式：计分板 -->
+            <div class="score-section single-mode-section">
                 <div class="score-card banker">
                     <h2>庄</h2>
                     <div class="score-display" id="bankerBalance">500</div>
