@@ -280,6 +280,11 @@ function clearBet(betType) {
 
 // 清除所有下注
 function clearAllBets() {
+    // 二次确认
+    if (!confirm('确定要清除所有押注吗？押注的筹码将会退还。')) {
+        return; // 用户取消，不执行清除操作
+    }
+    
     if (state.gameMode === 'single') {
         // 单人模式：退还所有筹码的积分
         let totalBet = 0;
