@@ -2023,7 +2023,8 @@ body::before {
     }
     
     body.multi-mode .dice-input-section {
-        flex: 0 1 auto; /* 改为不拉伸，由内容决定大小 */
+        flex: 1 1 auto; /* 占满剩余宽度，可以伸缩 */
+        min-width: 0; /* 允许收缩，防止溢出 */
         padding: 4px;
         gap: 4px;
         min-height: auto; /* 确保最小高度由内容决定 */
