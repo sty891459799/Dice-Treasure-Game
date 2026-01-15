@@ -2012,23 +2012,66 @@ body::before {
         min-height: 0;
     }
     
-    /* 减小骰子输入区高度，给押注区更多空间 */
-    .left-panel {
+    /* 多人模式下：减小骰子输入区高度，给押注区更多空间 */
+    body.multi-mode .left-panel {
         flex-shrink: 0;
-        max-height: 120px; /* 限制最大高度 */
+        max-height: 100px; /* 限制最大高度 */
+        padding: 4px 10px; /* 减小内边距 */
+        gap: 8px; /* 减小间距 */
     }
     
-    .dice-input-section {
-        padding: 6px;
-    }
-    
-    .dice-input-group {
+    body.multi-mode .dice-input-section {
         padding: 4px;
+        gap: 4px;
     }
     
-    .dice-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 0.9rem;
+    body.multi-mode .dice-input-section h3 {
+        font-size: 0.75rem;
+        margin: 0;
+    }
+    
+    body.multi-mode .dice-inputs {
+        gap: 6px; /* 减小骰子组之间的间距 */
+    }
+    
+    body.multi-mode .dice-input-group {
+        padding: 3px 5px; /* 减小内边距 */
+        gap: 4px;
+    }
+    
+    body.multi-mode .dice-selector {
+        gap: 2px; /* 减小骰子按钮之间的间距 */
+    }
+    
+    body.multi-mode .dice-btn {
+        width: 28px; /* 减小骰子按钮大小 */
+        height: 28px;
+        font-size: 0.75rem;
+        padding: 2px;
+    }
+    
+    body.multi-mode .result-preview {
+        padding: 4px 8px; /* 减小内边距 */
+        gap: 6px; /* 减小间距 */
+    }
+    
+    body.multi-mode .preview-dice {
+        gap: 4px;
+    }
+    
+    body.multi-mode .preview-die {
+        width: 24px; /* 减小预览骰子大小 */
+        height: 24px;
+        font-size: 0.8rem;
+    }
+    
+    body.multi-mode .preview-info {
+        font-size: 0.7rem; /* 减小字体 */
+        padding: 2px 6px;
+    }
+    
+    body.multi-mode .confirm-btn {
+        padding: 5px 16px; /* 减小按钮内边距 */
+        font-size: 0.8rem; /* 减小字体 */
     }
 }

@@ -1280,6 +1280,9 @@ function switchToMultiMode() {
     const multiSection = document.getElementById('multiPlayersSection');
     multiSection.style.display = 'flex';
     
+    // 给body添加多人模式类名，用于CSS选择器
+    document.body.classList.add('multi-mode');
+    
     // 生成玩家筹码区域UI
     renderMultiPlayersUI();
     
@@ -1314,6 +1317,9 @@ function switchToSingleMode() {
         multiSection.style.display = 'none';
         multiSection.innerHTML = ''; // 清空内容
     }
+    
+    // 移除多人模式类名
+    document.body.classList.remove('multi-mode');
     
     // 清空所有押注显示
     document.querySelectorAll('.chip-stack').forEach(stack => {
