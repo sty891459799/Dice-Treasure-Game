@@ -15,14 +15,6 @@
         <header class="header">
             <h1 class="title">骰 宝</h1>
             
-            <!-- 局数计数器 -->
-            <div class="round-counter">
-                <span class="round-label">第</span>
-                <span class="round-number" id="roundDisplay">0</span>
-                <span class="round-label">局</span>
-                <button class="round-reset-btn" onclick="resetRound()" title="重置局数">重置</button>
-            </div>
-            
             <!-- 模式切换按钮 -->
             <button class="mode-toggle-btn" onclick="openModeModal()" title="切换游戏模式">
                 <span id="modeIcon">👤</span>
@@ -69,6 +61,14 @@
                         <button class="score-btn reset" onclick="resetBalance('player')">重置</button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 局数计数器 -->
+            <div class="round-counter">
+                <span class="round-label">第</span>
+                <span class="round-number" id="roundDisplay">0</span>
+                <span class="round-label">局</span>
+                <button class="round-reset-btn" onclick="resetRound()" title="重置局数">重置</button>
             </div>
         </header>
 
