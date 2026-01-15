@@ -43,22 +43,24 @@
 
             <!-- 单人模式：计分板 -->
             <div class="score-section single-mode-section">
-                <div class="score-card banker">
-                    <h2>庄</h2>
-                    <div class="score-display" id="bankerBalance">500</div>
-                    <div class="score-controls">
-                        <button class="score-btn minus" onclick="adjustBalance('banker', -100)">-100</button>
-                        <button class="score-btn plus" onclick="adjustBalance('banker', 100)">+100</button>
-                        <button class="score-btn reset" onclick="resetBalance('banker')">重置</button>
+                <div class="score-cards-container">
+                    <div class="score-card banker">
+                        <h2>庄</h2>
+                        <div class="score-display" id="bankerBalance">500</div>
+                        <div class="score-controls">
+                            <button class="score-btn minus" onclick="adjustBalance('banker', -100)">-100</button>
+                            <button class="score-btn plus" onclick="adjustBalance('banker', 100)">+100</button>
+                            <button class="score-btn reset" onclick="resetBalance('banker')">重置</button>
+                        </div>
                     </div>
-                </div>
-                <div class="score-card player">
-                    <h2>闲</h2>
-                    <div class="score-display" id="playerBalance">500</div>
-                    <div class="score-controls">
-                        <button class="score-btn minus" onclick="adjustBalance('player', -100)">-100</button>
-                        <button class="score-btn plus" onclick="adjustBalance('player', 100)">+100</button>
-                        <button class="score-btn reset" onclick="resetBalance('player')">重置</button>
+                    <div class="score-card player">
+                        <h2>闲</h2>
+                        <div class="score-display" id="playerBalance">500</div>
+                        <div class="score-controls">
+                            <button class="score-btn minus" onclick="adjustBalance('player', -100)">-100</button>
+                            <button class="score-btn plus" onclick="adjustBalance('player', 100)">+100</button>
+                            <button class="score-btn reset" onclick="resetBalance('player')">重置</button>
+                        </div>
                     </div>
                 </div>
                 
