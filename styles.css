@@ -2012,17 +2012,21 @@ body::before {
         min-height: 0;
     }
     
-    /* 多人模式下：减小骰子输入区高度，给押注区更多空间 */
+    /* 多人模式下：减小骰子输入区内边距，让高度由内容撑起 */
     body.multi-mode .left-panel {
         flex-shrink: 0;
-        max-height: 100px; /* 限制最大高度 */
+        /* 移除max-height限制，让容器高度由内容撑起 */
         padding: 4px 10px; /* 减小内边距 */
         gap: 8px; /* 减小间距 */
+        align-items: flex-start; /* 改为flex-start，让内容自然撑开 */
+        min-height: auto; /* 确保最小高度由内容决定 */
     }
     
     body.multi-mode .dice-input-section {
+        flex: 0 1 auto; /* 改为不拉伸，由内容决定大小 */
         padding: 4px;
         gap: 4px;
+        min-height: auto; /* 确保最小高度由内容决定 */
     }
     
     body.multi-mode .dice-input-section h3 {
@@ -2031,12 +2035,17 @@ body::before {
     }
     
     body.multi-mode .dice-inputs {
+        flex: 0 1 auto; /* 改为不拉伸，由内容决定大小 */
         gap: 6px; /* 减小骰子组之间的间距 */
+        min-height: auto; /* 确保最小高度由内容决定 */
     }
     
     body.multi-mode .dice-input-group {
+        flex: 0 1 auto; /* 改为不拉伸，由内容决定大小 */
         padding: 3px 5px; /* 减小内边距 */
         gap: 4px;
+        min-height: auto; /* 确保最小高度由内容决定 */
+        align-items: flex-start; /* 改为flex-start，让内容自然撑开 */
     }
     
     body.multi-mode .dice-selector {
