@@ -1282,6 +1282,10 @@ function switchToMultiMode() {
     });
     
     // 显示多人模式元素
+    document.querySelectorAll('.multi-mode-section').forEach(el => {
+        el.style.display = '';
+    });
+    
     const multiSection = document.getElementById('multiPlayersSection');
     multiSection.style.display = 'flex';
     
@@ -1317,6 +1321,10 @@ function switchToSingleMode() {
     if (scoreSection) scoreSection.style.display = 'flex';
     
     // 隐藏多人模式元素
+    document.querySelectorAll('.multi-mode-section').forEach(el => {
+        el.style.display = 'none';
+    });
+    
     const multiSection = document.getElementById('multiPlayersSection');
     if (multiSection) {
         multiSection.style.display = 'none';
@@ -1400,6 +1408,13 @@ function renderMultiPlayersUI() {
         
         container.appendChild(row);
     });
+    
+    // 当玩家数量>=4时，添加类名以便使用grid布局（每行两个）
+    if (state.players.length >= 4) {
+        container.classList.add('has-many-players');
+    } else {
+        container.classList.remove('has-many-players');
+    }
 }
 
 // 选择玩家

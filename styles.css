@@ -53,7 +53,7 @@ body::before {
     grid-area: header;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start; /* 改为flex-start，允许内容换行 */
+    align-items: center; /* 垂直居中对齐 */
     padding: 10px 20px;
     background: linear-gradient(180deg, #3d2817 0%, #1a1108 100%);
     border-radius: 10px;
@@ -61,6 +61,8 @@ body::before {
     box-shadow: 0 4px 15px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.3);
     gap: 25px;
     overflow: visible; /* 不允许滚动条 */
+    flex-wrap: nowrap; /* 不换行，始终保持左中右布局 */
+    min-width: 0; /* 允许收缩 */
 }
 
 .title {
@@ -69,6 +71,7 @@ body::before {
     color: var(--gold-light);
     text-shadow: 2px 2px 4px #000, 0 0 15px rgba(212, 175, 55, 0.4);
     flex-shrink: 0;
+    align-self: center; /* 在header中垂直居中 */
 }
 
 /* 局数计数器 */
@@ -77,14 +80,16 @@ body::before {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    flex-shrink: 0;
-    margin-left: auto; /* 自动靠右显示 */
-    align-items: flex-end; /* 右对齐 */
+    flex: 0 0 auto; /* 固定大小，不拉伸 */
+    flex-shrink: 1; /* 允许收缩，占据更小空间 */
+    align-items: center; /* 居中对齐 */
+    align-self: center; /* 在header中垂直居中 */
 }
 
 .round-counter {
     display: flex;
     align-items: center;
+    justify-content: center; /* 水平居中 */
     gap: 8px;
     padding: 8px 15px;
     background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(184, 134, 11, 0.2) 100%);
@@ -157,21 +162,28 @@ body::before {
     align-items: center;
     justify-content: center;
     gap: 15px;
+    align-self: center; /* 在header中垂直居中 */
     background: rgba(0,0,0,0.5);
     padding: 8px 15px;
     border-radius: 40px;
     border: 1px solid rgba(212, 175, 55, 0.3);
     box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+    min-width: 0; /* 允许收缩 */
+    flex-shrink: 0; /* 不允许过度压缩 */
 }
 
 .chip-selector {
     display: flex;
     gap: 10px;
+    flex-shrink: 0; /* 不允许压缩 */
+    min-width: 0; /* 允许收缩，但由flex-shrink控制 */
 }
 
 .chip {
     width: 42px;
     height: 42px;
+    min-width: 42px; /* 防止宽度被压缩 */
+    min-height: 42px; /* 防止高度被压缩 */
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -184,6 +196,7 @@ body::before {
     transition: all 0.2s;
     box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    flex-shrink: 0; /* 不允许压缩 */
 }
 
 .chip:hover {
@@ -197,7 +210,7 @@ body::before {
     transform: scale(1.1) translateY(-2px);
 }
 
-.chip[data-value="10"] { background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0); color: #333; font-weight: bold; }
+.chip[data-value="10"] { background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0); color: white; font-weight: bold; }
 .chip[data-value="30"] { background: radial-gradient(circle at 30% 30%, #2196F3, #0d47a1); }
 .chip[data-value="50"] { background: radial-gradient(circle at 30% 30%, #4CAF50, #1b5e20); }
 .chip[data-value="100"] { background: radial-gradient(circle at 30% 30%, #f44336, #b71c1c); }
@@ -240,15 +253,22 @@ body::before {
 .score-section { 
     display: flex; 
     gap: 12px; 
-    flex-shrink: 0;
+    flex: 1 1 auto; /* 占据更多空间 */
     min-width: 0;
     flex-wrap: wrap;
+    align-self: center; /* 在header中垂直居中 */
 }
 
 /* 计分卡容器：横向排列庄家和闲家 */
 .score-cards-container {
     display: flex;
     gap: 12px;
+    width: 100%; /* 占满父容器宽度 */
+    max-width: 100%; /* 确保不超过父容器 */
+    min-width: 0; /* 允许收缩 */
+    flex: 1; /* 占据可用空间 */
+    box-sizing: border-box; /* 包含padding和border */
+    flex-wrap: nowrap; /* 不折行，确保两个卡片在同一行 */
 }
 .score-card { 
     display: flex; 
@@ -268,8 +288,18 @@ body::before {
     text-shadow: 1px 1px 2px black; 
     flex-shrink: 0;
 }
-.score-card.banker { background: linear-gradient(135deg, #c41e3a, #922b21); border-color: #ff6b6b; }
-.score-card.player { background: linear-gradient(135deg, #2980b9, #1a5276); border-color: #5dade2; }
+.score-card.banker { 
+    background: linear-gradient(135deg, #c41e3a, #922b21); 
+    border-color: #ff6b6b; 
+    flex: 1; /* 均分父容器空间 */
+    min-width: 0; /* 允许收缩 */
+}
+.score-card.player { 
+    background: linear-gradient(135deg, #2980b9, #1a5276); 
+    border-color: #5dade2; 
+    flex: 1; /* 均分父容器空间 */
+    min-width: 0; /* 允许收缩 */
+}
 
 /* 清除押注按钮 */
 .clear-bets-btn {
@@ -842,7 +872,7 @@ body::before {
     z-index: 1;
 }
 
-.chip-item.chip-10 { background: radial-gradient(circle, #ffffff, #e0e0e0); color: #333; font-weight: bold; }
+.chip-item.chip-10 { background: radial-gradient(circle, #ffffff, #e0e0e0); color: white; font-weight: bold; }
 .chip-item.chip-30 { background: radial-gradient(circle, #2196F3, #0d47a1); }
 .chip-item.chip-50 { background: radial-gradient(circle, #4CAF50, #1b5e20); }
 .chip-item.chip-100 { background: radial-gradient(circle, #f44336, #b71c1c); }
@@ -1186,12 +1216,114 @@ body::before {
     display: none;
 }
 
+/* 中等屏幕响应式适配（1400px - 1600px） */
+@media screen and (max-width: 1600px) and (min-width: 1401px) {
+    .header {
+        gap: 15px; /* 减小间距 */
+        padding: 8px 15px; /* 减小内边距 */
+    }
+    
+    .title {
+        font-size: 1.7rem; /* 稍微减小标题字体 */
+    }
+    
+    .header-chip-section {
+        gap: 10px; /* 减小筹码间距 */
+        padding: 6px 12px; /* 减小内边距 */
+    }
+    
+    .chip {
+        width: 38px; /* 稍微减小筹码大小 */
+        height: 38px;
+        min-width: 38px;
+        min-height: 38px;
+    }
+    
+    .score-card {
+        min-width: 200px; /* 减小最小宽度 */
+        max-width: 300px; /* 减小最大宽度 */
+        padding: 5px 12px; /* 减小内边距 */
+    }
+    
+    .score-display {
+        font-size: 1.3rem; /* 稍微减小字体 */
+        min-width: 55px;
+    }
+    
+    .round-and-clear-container {
+        min-width: 140px; /* 减小最小宽度 */
+        max-width: 160px; /* 减小最大宽度 */
+    }
+    
+    .round-counter {
+        padding: 6px 10px; /* 减小内边距 */
+        gap: 6px;
+    }
+    
+    .round-number {
+        font-size: 1.2rem; /* 稍微减小字体 */
+        padding: 3px 10px;
+        min-width: 35px;
+    }
+    
+    .clear-bets-btn {
+        padding: 6px 10px; /* 减小内边距 */
+        font-size: 0.8rem; /* 稍微减小字体 */
+    }
+}
+
 /* iPad 和小屏幕响应式适配 */
 @media screen and (max-width: 1400px) {
     .game-container {
         grid-template-columns: 170px 1fr;
         gap: 4px;
         padding: 4px;
+    }
+    
+    /* Header响应式优化 */
+    .header {
+        gap: 12px; /* 进一步减小间距 */
+        padding: 8px 12px; /* 减小内边距 */
+        flex-wrap: nowrap !important; /* 不换行，始终保持左中右布局 */
+        align-items: center !important; /* 垂直居中对齐 */
+    }
+    
+    .title {
+        font-size: 1.5rem; /* 减小标题字体 */
+        flex: 0 0 auto; /* 固定大小 */
+    }
+    
+    .header-chip-section {
+        gap: 8px; /* 减小筹码间距 */
+        padding: 6px 10px; /* 减小内边距 */
+        flex: 0 1 auto; /* 允许收缩 */
+        min-width: 0;
+    }
+    
+    .chip {
+        width: 36px; /* 减小筹码大小 */
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+    }
+    
+    .chip-selector {
+        gap: 6px; /* 减小筹码之间的间距 */
+    }
+    
+    .header-bet-info {
+        font-size: 0.85rem; /* 稍微减小字体 */
+        gap: 8px;
+        padding-left: 10px;
+    }
+    
+    .header-bet-info strong {
+        font-size: 1.1rem; /* 稍微减小字体 */
+    }
+    
+    .header-clear-btn {
+        padding: 3px 10px; /* 减小内边距 */
+        font-size: 0.75rem; /* 稍微减小字体 */
     }
     
     .dice-inputs {
@@ -1216,11 +1348,21 @@ body::before {
     
     .score-section {
         gap: 10px;
+        flex: 1 1 auto; /* 占据可用空间 */
+        min-width: 0; /* 允许收缩 */
+    }
+    
+    .score-cards-container {
+        gap: 8px; /* 减小间距 */
+        flex-wrap: wrap; /* 允许换行 */
     }
     
     .score-card {
         gap: 8px;
         padding: 5px 12px;
+        min-width: 180px; /* 减小最小宽度 */
+        max-width: 280px; /* 减小最大宽度 */
+        flex: 1 1 auto; /* 允许收缩 */
     }
     
     .score-card h2 {
@@ -1236,6 +1378,32 @@ body::before {
         min-width: 38px;
         height: 22px;
         font-size: 0.65rem;
+    }
+    
+    .round-and-clear-container {
+        flex: 0 0 auto; /* 固定大小 */
+        min-width: 130px; /* 减小最小宽度 */
+        max-width: 150px; /* 减小最大宽度 */
+    }
+    
+    .round-counter {
+        padding: 5px 10px; /* 减小内边距 */
+        gap: 5px;
+    }
+    
+    .round-number {
+        font-size: 1.1rem; /* 稍微减小字体 */
+        padding: 3px 8px;
+        min-width: 32px;
+    }
+    
+    .round-label {
+        font-size: 0.8rem; /* 稍微减小字体 */
+    }
+    
+    .round-reset-btn {
+        padding: 3px 8px; /* 减小内边距 */
+        font-size: 0.7rem; /* 稍微减小字体 */
     }
     
     .clear-bets-btn {
@@ -1287,6 +1455,53 @@ body::before {
         padding: 3px;
     }
     
+    /* Header响应式优化 */
+    .header {
+        gap: 10px; /* 进一步减小间距 */
+        padding: 6px 10px; /* 减小内边距 */
+        flex-wrap: nowrap !important; /* 不换行，始终保持左中右布局 */
+        align-items: center !important; /* 垂直居中对齐 */
+    }
+    
+    .title {
+        font-size: 1.3rem; /* 进一步减小标题字体 */
+        flex: 0 0 auto;
+    }
+    
+    .header-chip-section {
+        gap: 6px; /* 进一步减小筹码间距 */
+        padding: 5px 8px; /* 减小内边距 */
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+    
+    .chip {
+        width: 32px; /* 进一步减小筹码大小 */
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 0.7rem; /* 稍微减小字体 */
+    }
+    
+    .chip-selector {
+        gap: 5px; /* 减小筹码之间的间距 */
+    }
+    
+    .header-bet-info {
+        font-size: 0.8rem; /* 稍微减小字体 */
+        gap: 6px;
+        padding-left: 8px;
+    }
+    
+    .header-bet-info strong {
+        font-size: 1rem; /* 稍微减小字体 */
+    }
+    
+    .header-clear-btn {
+        padding: 2px 8px; /* 减小内边距 */
+        font-size: 0.7rem; /* 稍微减小字体 */
+    }
+    
     .dice-inputs {
         gap: 8px;
     }
@@ -1314,11 +1529,21 @@ body::before {
     
     .score-section {
         gap: 8px;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    
+    .score-cards-container {
+        gap: 6px; /* 减小间距 */
+        flex-wrap: wrap; /* 允许换行 */
     }
     
     .score-card {
         gap: 6px;
         padding: 4px 10px;
+        min-width: 160px; /* 进一步减小最小宽度 */
+        max-width: 250px; /* 进一步减小最大宽度 */
+        flex: 1 1 auto;
     }
     
     .score-card h2 {
@@ -1335,6 +1560,32 @@ body::before {
         height: 20px;
         font-size: 0.6rem;
         padding: 2px 4px;
+    }
+    
+    .round-and-clear-container {
+        flex: 0 0 auto;
+        min-width: 120px; /* 进一步减小最小宽度 */
+        max-width: 140px; /* 进一步减小最大宽度 */
+    }
+    
+    .round-counter {
+        padding: 4px 8px; /* 减小内边距 */
+        gap: 4px;
+    }
+    
+    .round-number {
+        font-size: 1rem; /* 稍微减小字体 */
+        padding: 2px 6px;
+        min-width: 30px;
+    }
+    
+    .round-label {
+        font-size: 0.75rem; /* 稍微减小字体 */
+    }
+    
+    .round-reset-btn {
+        padding: 2px 6px; /* 减小内边距 */
+        font-size: 0.65rem; /* 稍微减小字体 */
     }
     
     .clear-bets-btn {
@@ -1664,6 +1915,194 @@ body::before {
     }
 }
 
+/* ============ 移动端820px宽度特殊布局 ============ */
+/* 左侧：标题 | 中间：积分和筹码（垂直） | 右侧：局数计分牌 */
+@media screen and (max-width: 820px) and (min-width: 769px) {
+    .header {
+        display: grid !important; /* 使用grid布局实现三列 */
+        grid-template-columns: auto 1fr auto !important; /* 左中右三列 */
+        grid-template-rows: auto auto !important; /* 两行：第一行是标题和局数，第二行是积分和筹码 */
+        gap: 8px !important;
+        padding: 8px 12px !important;
+        align-items: start !important;
+    }
+    
+    /* 多人模式下：只使用一行，移除第二行 */
+    body.multi-mode .header {
+        grid-template-rows: auto !important; /* 只有一行 */
+    }
+    
+    /* 多人模式下：确保第二行的元素不占据空间 */
+    body.multi-mode .header-chip-section {
+        display: none !important; /* 隐藏筹码区域 */
+    }
+    
+    /* 多人模式下：局数计数器只占据第一行，不跨越两行 */
+    body.multi-mode .round-and-clear-container {
+        grid-row: 1 !important; /* 只占据第一行 */
+    }
+    
+    /* 多人模式下：玩家区域占据中间列第一行 */
+    body.multi-mode .multi-players-section {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+    }
+    
+    /* 左侧：标题 - 第一行第一列 */
+    .title {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        font-size: 1.4rem !important;
+        align-self: center !important;
+        white-space: nowrap !important;
+        margin-right: auto !important;
+    }
+    
+    /* 中间：积分牌区域 - 第一行第二列，占据中间列 */
+    .score-section {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin-bottom: 6px !important; /* 与筹码区域的间距 */
+        box-sizing: border-box !important;
+    }
+    
+    .score-cards-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        gap: 8px !important;
+        flex-wrap: nowrap !important;
+        box-sizing: border-box !important;
+        flex: 1 1 100% !important; /* 占据全部可用空间 */
+    }
+    
+    .score-card {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        padding: 4px 8px !important;
+    }
+    
+    .score-card.banker {
+        flex: 1 !important; /* 均分父容器空间 */
+        min-width: 0 !important; /* 允许收缩 */
+    }
+    
+    .score-card.player {
+        flex: 1 !important; /* 均分父容器空间 */
+        min-width: 0 !important; /* 允许收缩 */
+    }
+    
+    .score-card h2 {
+        font-size: 0.85rem !important;
+    }
+    
+    .score-display {
+        font-size: 1.1rem !important;
+        min-width: 45px !important;
+    }
+    
+    .score-btn {
+        min-width: 30px !important;
+        height: 18px !important;
+        font-size: 0.6rem !important;
+        padding: 2px 4px !important;
+    }
+    
+    /* 中间：筹码区域 - 第二行第二列，在积分下面 */
+    .header-chip-section {
+        grid-column: 2 !important;
+        grid-row: 2 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        padding: 6px 8px !important;
+        margin: 0 !important;
+    }
+    
+    .chip-selector {
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .chip {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .header-bet-info {
+        font-size: 0.8rem !important;
+        gap: 6px !important;
+        padding-left: 8px !important;
+    }
+    
+    .header-bet-info strong {
+        font-size: 1rem !important;
+    }
+    
+    .header-clear-btn {
+        padding: 2px 8px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    /* 右侧：局数计分牌 - 第一行第三列，跨越两行 */
+    .round-and-clear-container {
+        grid-column: 3 !important;
+        grid-row: 1 / 3 !important; /* 跨越两行 */
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        align-items: center !important; /* 居中对齐 */
+        min-width: 120px !important;
+        max-width: 140px !important;
+        align-self: start !important;
+    }
+    
+    .round-counter {
+        padding: 4px 8px !important;
+        gap: 4px !important;
+        justify-content: center !important; /* 水平居中 */
+    }
+    
+    .round-number {
+        font-size: 1rem !important;
+        padding: 2px 6px !important;
+        min-width: 30px !important;
+    }
+    
+    .round-label {
+        font-size: 0.75rem !important;
+    }
+    
+    .round-reset-btn {
+        padding: 2px 6px !important;
+        font-size: 0.65rem !important;
+    }
+    
+    .clear-bets-btn {
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+        width: 100% !important;
+    }
+    
+    /* 移动端820px多人模式：当玩家数量>=4时，grid布局优化 */
+    .multi-players-section.has-many-players {
+        grid-template-columns: 1fr 1fr !important; /* 两列 */
+        gap: 4px !important; /* 减小间距 */
+    }
+    
+    .multi-players-section.has-many-players .player-chip-row {
+        min-width: 0 !important; /* 允许收缩 */
+        flex: 1 1 auto !important; /* 自适应大小 */
+    }
+}
+
 @media screen and (max-width: 768px) {
     .header {
         flex-wrap: wrap;
@@ -1691,6 +2130,8 @@ body::before {
     .score-cards-container {
         gap: 10px;
         flex-wrap: wrap; /* 小屏幕下允许换行 */
+        width: 100%; /* 占满父容器宽度 */
+        flex: 1; /* 占据可用空间 */
     }
     
     .score-card {
@@ -1957,14 +2398,38 @@ body::before {
 
 /* ============ 多人模式样式 ============ */
 
+/* 多人模式：局数计数器和清除按钮居中 */
+body.multi-mode .round-and-clear-container {
+    align-items: center !important; /* 居中对齐 */
+    align-self: center !important; /* 在header中垂直居中 */
+}
+
+body.multi-mode .round-counter {
+    justify-content: center !important; /* 水平居中 */
+}
+
+body.multi-mode .clear-bets-btn {
+    width: 100% !important; /* 占满容器宽度 */
+    justify-content: center !important; /* 内容居中 */
+}
+
 /* 多人模式玩家区域 */
 .multi-players-section {
-    flex: 1;
+    flex: 1 1 auto; /* 占据剩余空间，可以压缩 */
     display: flex;
     flex-direction: column;
     gap: 8px;
     max-height: 100%;
     overflow-y: auto;
+    min-width: 0; /* 允许压缩，防止溢出 */
+}
+
+/* 当玩家数量>=4时，使用grid布局，每行显示两个玩家 */
+.multi-players-section.has-many-players {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important; /* 两列 */
+    gap: 6px !important; /* 减小间距 */
+    align-content: start !important; /* 顶部对齐 */
 }
 
 .player-chip-row {
@@ -2014,9 +2479,11 @@ body::before {
     font-weight: 900;
     color: var(--gold-light);
     font-size: 1rem;
-    min-width: 70px;
+    min-width: 4.5rem; /* 使用rem动态设置宽度，约70px */
+    width: 4.5rem; /* 固定宽度，使用rem单位 */
     text-align: right;
     text-shadow: 0 0 5px rgba(244, 208, 63, 0.3);
+    flex-shrink: 0; /* 不允许压缩 */
 }
 
 .player-chip-selector {
@@ -2052,63 +2519,389 @@ body::before {
     background: rgba(255,255,255,0.2);
 }
 
+/* ============ PC端小于1100px时的特殊布局 ============ */
+/* 左侧：标题 | 中间：积分和筹码（垂直） | 右侧：局数计分牌 */
+@media screen and (min-width: 900px) and (max-width: 1100px) {
+    /* 使用grid布局实现三列布局 */
+    .header {
+        display: grid !important; /* 使用grid布局 */
+        grid-template-columns: auto 1fr auto !important; /* 左中右三列 */
+        grid-template-rows: auto auto !important; /* 两行：第一行是标题和局数，第二行是积分和筹码 */
+        gap: 10px !important;
+        padding: 8px 15px !important;
+        align-items: start !important;
+    }
+    
+    /* 多人模式下：只使用一行，移除第二行 */
+    body.multi-mode .header {
+        grid-template-rows: auto !important; /* 只有一行 */
+    }
+    
+    /* 多人模式下：确保第二行的元素不占据空间 */
+    body.multi-mode .header-chip-section {
+        display: none !important; /* 隐藏筹码区域 */
+    }
+    
+    /* 多人模式下：局数计数器只占据第一行，不跨越两行 */
+    body.multi-mode .round-and-clear-container {
+        grid-row: 1 !important; /* 只占据第一行 */
+    }
+    
+    /* 多人模式下：玩家区域占据中间列第一行 */
+    body.multi-mode .multi-players-section {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+    }
+    
+    /* 左侧：标题 - 第一行第一列 */
+    .title {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        font-size: 1.6rem !important;
+        align-self: center !important;
+        white-space: nowrap !important;
+        margin-right: auto !important;
+    }
+    
+    /* 中间：积分牌区域 - 第一行第二列，占据中间列 */
+    .score-section {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin-bottom: 8px !important; /* 与筹码区域的间距 */
+        box-sizing: border-box !important;
+    }
+    
+    .score-cards-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        gap: 10px !important;
+        flex-wrap: nowrap !important;
+        box-sizing: border-box !important;
+        flex: 1 1 100% !important; /* 占据全部可用空间 */
+    }
+    
+    .score-card {
+        flex: 0 1 auto !important; /* 不拉伸，根据内容调整 */
+        min-width: 0 !important;
+    }
+    
+    .score-card.banker {
+        flex: 1 !important; /* 均分父容器空间 */
+        min-width: 0 !important; /* 允许收缩 */
+    }
+    
+    .score-card.player {
+        flex: 1 !important; /* 均分父容器空间 */
+        min-width: 0 !important; /* 允许收缩 */
+    }
+    
+    /* 中间：筹码区域 - 第二行第二列，在积分下面 */
+    .header-chip-section {
+        grid-column: 2 !important;
+        grid-row: 2 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        justify-content: flex-start !important; /* 左对齐 */
+        gap: 10px !important;
+        padding: 8px 12px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
+    .chip-selector {
+        gap: 8px !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .chip {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        min-height: 38px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .header-bet-info {
+        font-size: 0.9rem !important;
+        gap: 8px !important;
+        padding-left: 12px !important;
+    }
+    
+    .header-bet-info strong {
+        font-size: 1.2rem !important;
+    }
+    
+    .header-clear-btn {
+        padding: 4px 10px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    /* 右侧：局数计分牌 - 第一行第三列，跨越两行 */
+    .round-and-clear-container {
+        grid-column: 3 !important;
+        grid-row: 1 / 3 !important; /* 跨越两行 */
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        align-items: center !important; /* 居中对齐 */
+        min-width: 140px !important;
+        max-width: 160px !important;
+        align-self: start !important;
+    }
+    
+    .round-counter {
+        padding: 6px 12px !important;
+        gap: 6px !important;
+        justify-content: center !important; /* 水平居中 */
+    }
+    
+    .round-number {
+        font-size: 1.2rem !important;
+        padding: 3px 10px !important;
+        min-width: 35px !important;
+    }
+    
+    .round-label {
+        font-size: 0.85rem !important;
+    }
+    
+    .round-reset-btn {
+        padding: 3px 8px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .clear-bets-btn {
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+        width: 100% !important;
+    }
+    
+    /* PC端900-1100px多人模式：当玩家数量>=4时，grid布局优化 */
+    .multi-players-section.has-many-players {
+        grid-template-columns: 1fr 1fr !important; /* 两列 */
+        gap: 4px !important; /* 减小间距 */
+    }
+    
+    .multi-players-section.has-many-players .player-chip-row {
+        min-width: 0 !important; /* 允许收缩 */
+        flex: 1 1 auto !important; /* 自适应大小 */
+    }
+}
+
 /* ============ PC端优化（多人模式） ============ */
-@media screen and (min-width: 1025px) {
+/* 注意：1101px以上才应用PC端规则，避免与820px特殊布局冲突 */
+@media screen and (min-width: 1101px) {
     /* PC端多人模式：减小闲家区域高度 */
     .multi-players-section {
-        max-height: 180px; /* 限制最大高度 */
-        gap: 4px; /* 减小间距 */
+        max-height: 140px !important; /* 进一步限制最大高度，让header更紧凑 */
+        gap: 3px !important; /* 进一步减小间距 */
+        flex: 1 1 auto !important; /* 占据剩余空间，可以压缩 */
+        min-width: 0 !important; /* 允许压缩，防止溢出 */
+    }
+    
+    /* PC端多人模式：当玩家数量>=4时，grid布局优化 */
+    .multi-players-section.has-many-players {
+        grid-template-columns: 1fr 1fr !important; /* 两列 */
+        gap: 4px !important; /* 减小间距 */
+        max-height: 120px !important; /* 进一步减小最大高度 */
+    }
+    
+    .multi-players-section.has-many-players .player-chip-row {
+        min-width: 0 !important; /* 允许收缩 */
+        flex: 1 1 auto !important; /* 自适应大小 */
     }
     
     .player-chip-row {
-        padding: 4px 8px; /* 减小内边距 */
-        gap: 8px; /* 减小元素间距 */
-        min-height: 40px; /* 设置最小高度 */
+        padding: 3px 6px !important; /* 进一步减小内边距 */
+        gap: 6px !important; /* 进一步减小元素间距 */
+        min-height: 36px !important; /* 减小最小高度 */
     }
     
     .player-info {
-        min-width: 80px; /* 减小最小宽度 */
-        gap: 6px;
+        min-width: 70px !important; /* 进一步减小最小宽度 */
+        gap: 5px !important; /* 减小间距 */
     }
     
     .player-color-indicator {
-        width: 16px; /* 减小颜色指示器大小 */
-        height: 16px;
+        width: 14px !important; /* 进一步减小颜色指示器大小 */
+        height: 14px !important;
     }
     
     .player-name {
-        font-size: 0.85rem; /* 减小字体 */
+        font-size: 0.8rem !important; /* 进一步减小字体 */
     }
     
     .player-balance {
-        font-size: 0.9rem; /* 减小余额字体 */
-        min-width: 60px;
+        font-size: 0.85rem !important; /* 进一步减小余额字体 */
+        min-width: 3.5rem !important; /* 使用rem动态设置宽度，约55px */
+        width: 3.5rem !important; /* 固定宽度，使用rem单位 */
+        flex-shrink: 0 !important; /* 不允许压缩 */
     }
     
     .player-chip-selector {
-        gap: 4px; /* 减小筹码间距 */
+        gap: 3px !important; /* 进一步减小筹码间距 */
     }
     
     .player-chip-selector .chip {
-        width: 32px; /* 减小筹码大小 */
-        height: 32px;
-        font-size: 0.7rem;
-        padding: 2px;
+        width: 30px !important; /* 进一步减小筹码大小 */
+        height: 30px !important;
+        font-size: 0.65rem !important; /* 减小字体 */
+        padding: 2px !important;
     }
     
     .player-controls {
-        gap: 3px;
+        gap: 2px !important; /* 减小间距 */
     }
     
     .player-control-btn {
-        padding: 3px 6px;
-        font-size: 0.65rem;
+        padding: 2px 5px !important; /* 减小内边距 */
+        font-size: 0.6rem !important; /* 减小字体 */
     }
     
-    /* 确保header不会太高 */
+    /* PC端header响应式优化 */
     .header {
         /* 移除max-height和overflow，不允许滚动条 */
         overflow: visible;
+        flex-wrap: nowrap !important; /* 不换行，始终保持左中右布局 */
+        align-items: center !important; /* 垂直居中对齐 */
+        gap: 15px; /* 减小间距 */
+        padding: 8px 15px; /* 减小内边距 */
+        min-width: 0; /* 允许收缩 */
+    }
+    
+    /* PC端多人模式：优化header高度，使其更紧凑 */
+    body.multi-mode .header {
+        padding: 6px 12px !important; /* 进一步减小内边距 */
+        gap: 10px !important; /* 进一步减小间距 */
+        height: auto !important; /* 高度自适应 */
+        max-height: none !important; /* 移除最大高度限制 */
+        flex-wrap: nowrap !important; /* 不换行，始终保持左中右布局 */
+    }
+    
+    /* PC端标题优化 */
+    .title {
+        flex: 0 0 auto; /* 固定大小，不拉伸 */
+        font-size: 1.8rem;
+        align-self: center; /* 在header中垂直居中 */
+        min-width: 0; /* 允许收缩 */
+        flex-shrink: 0; /* 不允许收缩，保持标题大小 */
+        white-space: nowrap; /* 不换行 */
+    }
+    
+    /* PC端多人模式：标题更紧凑 */
+    body.multi-mode .title {
+        font-size: 1.6rem !important; /* 稍微减小字体 */
+        margin: 0 !important;
+        flex-shrink: 0 !important; /* 不允许收缩 */
+    }
+    
+    /* PC端计分区域优化 */
+    .score-section {
+        flex: 1 1 auto; /* 占据更多空间 */
+        gap: 10px;
+        min-width: 0;
+        align-self: center; /* 在header中垂直居中 */
+    }
+    
+    .score-cards-container {
+        gap: 10px;
+        width: 100%; /* 占满父容器宽度 */
+        flex: 1; /* 占据可用空间 */
+    }
+    
+    .score-card {
+        flex: 1;
+        min-width: 220px; /* 增大最小宽度 */
+        max-width: 350px; /* 增大最大宽度 */
+    }
+    
+    /* PC端局数计数器和清除按钮容器优化 */
+    .round-and-clear-container {
+        flex: 0 0 auto; /* 不拉伸，固定大小 */
+        flex-shrink: 0 !important; /* 不允许收缩，保持固定大小 */
+        min-width: 150px; /* 减小最小宽度 */
+        max-width: 180px; /* 减小最大宽度 */
+        align-items: center !important; /* 居中对齐 */
+    }
+    
+    /* PC端多人模式：确保局数计数器和清除按钮居中并更紧凑 */
+    body.multi-mode .round-and-clear-container {
+        align-items: center !important; /* 居中对齐 */
+        gap: 6px !important; /* 减小间距 */
+        min-width: 130px !important; /* 减小最小宽度 */
+        max-width: 150px !important; /* 减小最大宽度 */
+    }
+    
+    body.multi-mode .round-counter {
+        justify-content: center !important; /* 水平居中 */
+        padding: 4px 10px !important; /* 减小内边距 */
+        gap: 5px !important; /* 减小间距 */
+    }
+    
+    body.multi-mode .round-number {
+        font-size: 1.1rem !important; /* 稍微减小字体 */
+        padding: 2px 8px !important; /* 减小内边距 */
+        min-width: 32px !important; /* 减小最小宽度 */
+    }
+    
+    body.multi-mode .round-label {
+        font-size: 0.8rem !important; /* 稍微减小字体 */
+    }
+    
+    body.multi-mode .round-reset-btn {
+        padding: 2px 6px !important; /* 减小内边距 */
+        font-size: 0.65rem !important; /* 稍微减小字体 */
+    }
+    
+    body.multi-mode .clear-bets-btn {
+        width: 100% !important; /* 占满容器宽度 */
+        padding: 5px 10px !important; /* 减小内边距 */
+        font-size: 0.8rem !important; /* 稍微减小字体 */
+    }
+    
+    .round-counter {
+        padding: 6px 12px;
+        gap: 6px;
+    }
+    
+    .clear-bets-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+    
+    /* PC端筹码区域优化 */
+    .header-chip-section {
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: none; /* 移除最大宽度限制，允许筹码区域自然展开 */
+        flex-shrink: 1; /* 允许适度压缩，但优先保持大小 */
+    }
+    
+    /* PC端计分区域优化 */
+    .score-section {
+        flex: 1 1 auto; /* 占据更多空间 */
+        gap: 10px;
+        min-width: 0; /* 允许收缩 */
+        align-self: center; /* 在header中垂直居中 */
+        max-width: 100%; /* 防止溢出 */
+    }
+    
+    .score-cards-container {
+        gap: 10px;
+        width: 100%; /* 占满父容器宽度 */
+        flex: 1; /* 占据可用空间 */
+        min-width: 0; /* 允许收缩 */
+    }
+    
+    .score-card {
+        flex: 1;
+        min-width: 200px; /* 设置合理的最小宽度，但允许在小屏幕时收缩 */
+        max-width: 350px; /* 设置合理的最大宽度 */
     }
     
     /* 确保核心押注区有足够空间 */

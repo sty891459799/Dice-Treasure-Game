@@ -1,0 +1,5038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>骰宝记分板</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>/* CSS Variables */
+:root {
+    --bg-dark: #0a0a0a;
+    --bg-table: #0d4d2d;
+    --gold: #d4af37;
+    --gold-light: #f4d03f;
+    --gold-dark: #b8860b;
+    --red: #c41e3a;
+    --blue: #2980b9;
+    --white: #f5f5f5;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: #0a0a0a;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, rgba(13, 51, 32, 0.6) 0%, #0a0a0a 70%);
+    z-index: -1;
+}
+
+/* 核心布局 */
+.game-container {
+    display: grid;
+    grid-template-areas: 
+        "header header"
+        "history main";
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    width: 100vw;
+    gap: 6px;
+    padding: 6px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* 顶部 Header */
+.header {
+    grid-area: header;
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* 垂直居中对齐 */
+    padding: 10px 20px;
+    background: linear-gradient(180deg, #3d2817 0%, #1a1108 100%);
+    border-radius: 10px;
+    border: 3px solid var(--gold);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.3);
+    gap: 25px;
+    overflow: visible; /* 不允许滚动条 */
+    flex-wrap: nowrap; /* 不换行，始终保持左中右布局 */
+    min-width: 0; /* 允许收缩 */
+}
+
+.title {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 2rem;
+    color: var(--gold-light);
+    text-shadow: 2px 2px 4px #000, 0 0 15px rgba(212, 175, 55, 0.4);
+    flex-shrink: 0;
+    align-self: center; /* 在header中垂直居中 */
+}
+
+/* 局数计数器 */
+/* 局数计数器和清除按钮容器 */
+.round-and-clear-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 0 0 auto; /* 固定大小，不拉伸 */
+    flex-shrink: 1; /* 允许收缩，占据更小空间 */
+    align-items: center; /* 居中对齐 */
+    align-self: center; /* 在header中垂直居中 */
+}
+
+.round-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* 水平居中 */
+    gap: 8px;
+    padding: 8px 15px;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(184, 134, 11, 0.2) 100%);
+    border: 2px solid var(--gold-dark);
+    border-radius: 8px;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.round-label {
+    font-size: 0.9rem;
+    color: var(--gold-light);
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.round-number {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #fff;
+    min-width: 40px;
+    text-align: center;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--gold-dark);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.5),
+        0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.round-reset-btn {
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    border: 1px solid #922b21;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: 
+        0 2px 0 #922b21,
+        0 3px 6px rgba(231, 76, 60, 0.3);
+    transition: all 0.15s;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.round-reset-btn:hover {
+    background: linear-gradient(180deg, #ec7063 0%, #e74c3c 100%);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 3px 0 #922b21,
+        0 4px 8px rgba(231, 76, 60, 0.4);
+}
+
+.round-reset-btn:active {
+    transform: translateY(1px);
+    box-shadow: 
+        0 1px 0 #922b21,
+        0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+/* 筹码区域 */
+.header-chip-section {
+    flex: 0 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    align-self: center; /* 在header中垂直居中 */
+    background: rgba(0,0,0,0.5);
+    padding: 8px 15px;
+    border-radius: 40px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+    min-width: 0; /* 允许收缩 */
+    flex-shrink: 0; /* 不允许过度压缩 */
+}
+
+.chip-selector {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0; /* 不允许压缩 */
+    min-width: 0; /* 允许收缩，但由flex-shrink控制 */
+}
+
+.chip {
+    width: 42px;
+    height: 42px;
+    min-width: 42px; /* 防止宽度被压缩 */
+    min-height: 42px; /* 防止高度被压缩 */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: white;
+    border: 3px dashed rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    flex-shrink: 0; /* 不允许压缩 */
+}
+
+.chip:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+}
+
+.chip.selected { 
+    border-style: solid; 
+    box-shadow: 0 0 15px white, 0 6px 12px rgba(0,0,0,0.5); 
+    transform: scale(1.1) translateY(-2px);
+}
+
+.chip[data-value="10"] { background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0); color: white; font-weight: bold; }
+.chip[data-value="30"] { background: radial-gradient(circle at 30% 30%, #2196F3, #0d47a1); }
+.chip[data-value="50"] { background: radial-gradient(circle at 30% 30%, #4CAF50, #1b5e20); }
+.chip[data-value="100"] { background: radial-gradient(circle at 30% 30%, #f44336, #b71c1c); }
+.chip[data-value="300"] { background: radial-gradient(circle at 30% 30%, #9C27B0, #4A148C); }
+.chip[data-value="500"] { background: radial-gradient(circle at 30% 30%, #FF9800, #E65100); }
+
+.header-bet-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    font-size: 0.95rem;
+    border-left: 1px solid rgba(255,255,255,0.2);
+    padding-left: 15px;
+}
+
+.header-bet-info strong { 
+    color: var(--gold-light); 
+    font-size: 1.3rem; 
+    text-shadow: 0 0 8px rgba(244, 208, 63, 0.5); 
+}
+
+.header-clear-btn {
+    padding: 4px 12px;
+    background: linear-gradient(to bottom, #e74c3c, #c0392b);
+    color: white;
+    border: 1px solid #922b21;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.header-clear-btn:hover {
+    background: linear-gradient(to bottom, #ec7063, #e74c3c);
+}
+
+/* 计分板 */
+.score-section { 
+    display: flex; 
+    gap: 12px; 
+    flex: 1 1 auto; /* 占据更多空间 */
+    min-width: 0;
+    flex-wrap: wrap;
+    align-self: center; /* 在header中垂直居中 */
+}
+
+/* 计分卡容器：横向排列庄家和闲家 */
+.score-cards-container {
+    display: flex;
+    gap: 12px;
+    width: 100%; /* 占满父容器宽度 */
+    max-width: 100%; /* 确保不超过父容器 */
+    min-width: 0; /* 允许收缩 */
+    flex: 1; /* 占据可用空间 */
+    box-sizing: border-box; /* 包含padding和border */
+    flex-wrap: nowrap; /* 不折行，确保两个卡片在同一行 */
+}
+.score-card { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    padding: 6px 15px; 
+    border-radius: 8px; 
+    border: 2px solid; 
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+}
+.score-card h2 { 
+    font-size: 1rem; 
+    color: white; 
+    text-shadow: 1px 1px 2px black; 
+    flex-shrink: 0;
+}
+.score-card.banker { 
+    background: linear-gradient(135deg, #c41e3a, #922b21); 
+    border-color: #ff6b6b; 
+    flex: 1; /* 均分父容器空间 */
+    min-width: 0; /* 允许收缩 */
+}
+.score-card.player { 
+    background: linear-gradient(135deg, #2980b9, #1a5276); 
+    border-color: #5dade2; 
+    flex: 1; /* 均分父容器空间 */
+    min-width: 0; /* 允许收缩 */
+}
+
+/* 清除押注按钮 */
+.clear-bets-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border: 2px solid #ff6b6b;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 
+        0 3px 8px rgba(231, 76, 60, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
+    white-space: nowrap;
+    width: 100%; /* 与局数计数器同宽 */
+}
+
+.clear-bets-btn:hover {
+    background: linear-gradient(135deg, #ec7063, #e74c3c);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 5px 12px rgba(231, 76, 60, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.clear-bets-btn:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 2px 6px rgba(231, 76, 60, 0.4),
+        inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.clear-bets-btn .btn-icon {
+    font-size: 1rem;
+}
+
+.clear-bets-btn .btn-text {
+    font-size: 0.9rem;
+}
+.score-display { 
+    font-size: 1.5rem; 
+    font-weight: 900; 
+    color: white; 
+    min-width: 60px; 
+    text-align: center; 
+    text-shadow: 0 0 10px rgba(255,255,255,0.3); 
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.score-display.flash-increase {
+    animation: flashIncrease 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes flashIncrease {
+    0% { 
+        transform: scale(1);
+        color: white;
+    }
+    50% { 
+        transform: scale(1.8);
+        color: #FFD700;
+    }
+    100% { 
+        transform: scale(1);
+        color: white;
+    }
+}
+.score-controls { 
+    display: flex; 
+    gap: 3px; 
+    flex-shrink: 0;
+}
+.score-btn { 
+    padding: 2px 6px;
+    min-width: 42px;
+    height: 24px; 
+    font-size: 0.7rem; 
+    border-radius: 4px; 
+    border: 1px solid rgba(255,255,255,0.3); 
+    background: rgba(255,255,255,0.1); 
+    color: white; 
+    cursor: pointer;
+    white-space: nowrap;
+}
+.score-btn:hover { background: rgba(255,255,255,0.2); }
+
+/* 主内容区 */
+.main-content {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* 输入区面板 */
+.left-panel {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    border-radius: 10px;
+    padding: 8px 15px;
+    border: 3px solid var(--gold);
+    box-shadow: 
+        0 5px 15px rgba(0,0,0,0.6), 
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        inset 0 -2px 5px rgba(0,0,0,0.3);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.left-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+    opacity: 0.5;
+}
+
+.dice-input-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.dice-input-section h3 {
+    color: var(--gold-light);
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-align: center;
+    margin: 0;
+    text-shadow: 
+        0 0 10px rgba(244, 208, 63, 0.6),
+        0 2px 4px rgba(0,0,0,0.8);
+    text-transform: uppercase;
+}
+
+.dice-inputs {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.dice-input-group {
+    background: linear-gradient(145deg, rgba(0,0,0,0.5), rgba(0,0,0,0.7));
+    border: 2px solid rgba(212, 175, 55, 0.4);
+    border-radius: 6px;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 
+        inset 0 2px 4px rgba(0,0,0,0.5),
+        0 2px 8px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+    flex: 1;
+    min-width: 0;
+    overflow: visible; /* 允许内容溢出，防止压缩 */
+}
+
+.dice-input-group:hover {
+    border-color: rgba(212, 175, 55, 0.6);
+    box-shadow: 
+        inset 0 2px 4px rgba(0,0,0,0.5),
+        0 2px 8px rgba(0,0,0,0.3),
+        0 0 10px rgba(212, 175, 55, 0.2);
+}
+
+.dice-input-group label { 
+    color: var(--gold-light); 
+    font-size: 0.95rem; 
+    font-weight: 900; 
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    min-width: 40px;
+}
+
+.dice-selector { 
+    display: flex; 
+    gap: 5px; 
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    flex-wrap: wrap; /* 允许按钮换行，防止压缩 */
+    align-content: flex-start; /* 换行时顶部对齐 */
+}
+
+.dice-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px !important; /* 防止宽度被压缩，使用!important确保优先级 */
+    flex-shrink: 0 !important; /* 不允许收缩，使用!important确保优先级 */
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    position: relative;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box; /* 确保宽度计算正确 */
+}
+
+.dice-btn .dice {
+    box-shadow: 
+        0 3px 0 #a0a0a0,
+        0 4px 8px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,1),
+        inset 0 -1px 2px rgba(0,0,0,0.1);
+}
+
+.dice-btn:hover {
+    transform: translateY(-1px);
+}
+
+.dice-btn:hover .dice {
+    box-shadow: 
+        0 4px 0 #a0a0a0,
+        0 5px 10px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,1),
+        inset 0 -1px 2px rgba(0,0,0,0.1);
+}
+
+.dice-btn:active {
+    transform: translateY(2px);
+}
+
+.dice-btn:active .dice {
+    box-shadow: 
+        0 1px 0 #a0a0a0,
+        0 2px 4px rgba(0,0,0,0.4),
+        inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.dice-btn.selected { 
+    transform: translateY(2px);
+}
+
+.dice-btn.selected .dice { 
+    background: linear-gradient(145deg, #ffd700, #f4d03f, #d4af37);
+    box-shadow: 
+        0 1px 0 #8b6914,
+        0 2px 6px rgba(212, 175, 55, 0.6),
+        0 0 15px rgba(244, 208, 63, 0.5),
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        inset 0 -1px 3px rgba(0,0,0,0.3);
+}
+
+.result-preview {
+    background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(20,20,20,0.8));
+    border-radius: 8px;
+    padding: 6px 12px;
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 
+        inset 0 2px 5px rgba(0,0,0,0.5),
+        0 3px 10px rgba(0,0,0,0.4);
+}
+
+.preview-die { 
+    font-size: 1.8rem; 
+    color: white; 
+    text-shadow: 
+        0 0 8px rgba(255,255,255,0.8),
+        0 2px 4px rgba(0,0,0,0.5); 
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+}
+
+.preview-info { 
+    font-size: 0.85rem; 
+    color: var(--gold-light); 
+    font-weight: 900; 
+    text-shadow: 
+        0 0 8px rgba(244, 208, 63, 0.5),
+        0 1px 3px rgba(0,0,0,0.8);
+    letter-spacing: 0.5px;
+}
+
+.confirm-btn {
+    background: linear-gradient(180deg, #2ecc71 0%, #27ae60 50%, #1e8449 100%);
+    color: white;
+    border: none;
+    padding: 8px 30px;
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 
+        0 4px 0 #145a32,
+        0 5px 12px rgba(39, 174, 96, 0.5),
+        inset 0 1px 0 rgba(255,255,255,0.3);
+    text-shadow: 
+        0 2px 3px rgba(0,0,0,0.5),
+        0 0 10px rgba(255,255,255,0.2);
+    transition: all 0.15s;
+    letter-spacing: 2px;
+}
+
+.confirm-btn:hover {
+    background: linear-gradient(180deg, #52be80 0%, #2ecc71 50%, #27ae60 100%);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 7px 0 #145a32,
+        0 8px 20px rgba(39, 174, 96, 0.6),
+        0 0 15px rgba(46, 204, 113, 0.4),
+        inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.confirm-btn:active { 
+    transform: translateY(3px); 
+    box-shadow: 
+        0 2px 0 #145a32,
+        0 3px 8px rgba(39, 174, 96, 0.4),
+        inset 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.confirm-btn:disabled,
+.confirm-btn.disabled {
+    background: linear-gradient(180deg, #7f8c8d 0%, #95a5a6 50%, #bdc3c7 100%) !important;
+    color: #d5d8dc;
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: 
+        0 2px 0 #566573,
+        0 3px 8px rgba(127, 140, 141, 0.3),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+    filter: grayscale(100%);
+    pointer-events: none;
+}
+
+.confirm-btn:disabled:hover,
+.confirm-btn.disabled:hover {
+    transform: none !important;
+    box-shadow: 
+        0 2px 0 #566573,
+        0 3px 8px rgba(127, 140, 141, 0.3),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+/* 押注棋盘 */
+.betting-table {
+    background: radial-gradient(circle at center, #0d4d2d 0%, #072b1a 100%);
+    border-radius: 10px;
+    padding: 8px;
+    border: 3px solid var(--gold-dark);
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.bet-section { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 0; 
+}
+
+.top-bets { 
+    display: grid; 
+    grid-template-columns: 1.2fr 1.2fr 1fr 1fr 1fr 1fr 1fr 1fr; 
+    gap: 6px; 
+    flex: 1; 
+}
+
+.bet-box.pair {
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%) !important;
+}
+
+.pair-dice {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 3px;
+}
+
+.bet-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.05), 0 3px 6px rgba(0,0,0,0.3);
+    transition: all 0.2s;
+    cursor: pointer;
+    height: 100%;
+    min-height: 45px;
+    z-index: 1;
+    overflow: visible;
+    padding: 8px;
+}
+
+.bet-box:hover { 
+    border-color: rgba(255,255,255,0.3); 
+    transform: translateY(-1px); 
+}
+
+.bet-box.has-bet {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+    z-index: 10;
+}
+
+.big-small { background: linear-gradient(135deg, #c41e3a 0%, #922b21 100%) !important; }
+.odd-even { background: linear-gradient(135deg, #2980b9 0%, #1a5276 100%) !important; }
+.bet-box.total { background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%) !important; }
+.bet-box.triple { background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%) !important; }
+.bet-box.any-triple { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%) !important; }
+.bet-box.single { background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%) !important; }
+
+.bet-name { 
+    font-size: 1.5rem; 
+    font-weight: 900; 
+    color: white; 
+    letter-spacing: 3px; 
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.bet-range { 
+    font-size: 0.65rem; 
+    font-weight: bold; 
+    color: rgba(255,255,255,0.7); 
+    margin-top: 2px; 
+}
+
+.bet-odds {
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: #ffd700;
+    margin-top: 3px;
+    text-shadow: 
+        0 1px 3px rgba(0,0,0,0.9),
+        0 0 5px rgba(255, 215, 0, 0.5);
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+.total-grid { 
+    display: grid; 
+    grid-template-columns: repeat(14, 1fr); 
+    gap: 4px; 
+    flex: 1; 
+}
+
+.triple-grid { 
+    display: grid; 
+    grid-template-columns: repeat(7, 1fr); 
+    gap: 4px; 
+    flex: 1; 
+}
+
+.single-grid { 
+    display: grid; 
+    grid-template-columns: repeat(6, 1fr); 
+    gap: 4px; 
+    flex: 1; 
+}
+
+.double-grid {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 2px;
+    flex: 1;
+}
+
+.bet-box.double {
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%) !important;
+    padding: 3px;
+}
+
+.double-dice {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+
+.bet-number { 
+    font-size: 1.1rem; 
+    font-weight: 900; 
+    color: white; 
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    margin-bottom: 2px;
+}
+
+.dice-icon { 
+    width: 50px;
+    height: 50px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 3px 6px rgba(0,0,0,0.4),
+        inset 0 1px 2px rgba(0,0,0,0.1);
+    margin-bottom: 3px;
+    font-size: 2rem;
+    color: #d32f2f;
+    font-weight: 900;
+}
+
+.triple-dice { 
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 3px;
+}
+
+/* 筹码堆叠 */
+.chip-stack {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.chip-item {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid white;
+    font-size: 0.55rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: -12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.8);
+    text-shadow: 1px 1px 2px black;
+    position: relative;
+    z-index: 1;
+}
+
+.chip-item.chip-10 { background: radial-gradient(circle, #ffffff, #e0e0e0); color: white; font-weight: bold; }
+.chip-item.chip-30 { background: radial-gradient(circle, #2196F3, #0d47a1); }
+.chip-item.chip-50 { background: radial-gradient(circle, #4CAF50, #1b5e20); }
+.chip-item.chip-100 { background: radial-gradient(circle, #f44336, #b71c1c); }
+.chip-item.chip-300 { background: radial-gradient(circle, #9C27B0, #4A148C); }
+.chip-item.chip-500 { background: radial-gradient(circle, #FF9800, #E65100); }
+
+.chip-total {
+    font-size: 0.65rem;
+    background: #000;
+    color: var(--gold-light);
+    padding: 2px 5px;
+    border-radius: 12px;
+    margin-left: 14px;
+    border: 1px solid var(--gold);
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    white-space: nowrap;
+}
+
+/* 历史记录 */
+.history-panel {
+    grid-area: history;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    padding: 8px;
+    border: 2px solid var(--gold-dark);
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.history-header { 
+    display: flex; 
+    justify-content: space-between; 
+    margin-bottom: 6px; 
+    flex-shrink: 0;
+}
+
+.history-header h3 { 
+    font-size: 0.8rem; 
+    color: var(--gold); 
+    letter-spacing: 1px; 
+}
+
+.clear-history-btn {
+    padding: 2px 6px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    cursor: pointer;
+}
+
+.history-list { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px; 
+    overflow-y: auto; 
+    flex: 1;
+}
+
+.history-item {
+    display: grid;
+    grid-template-columns: 30px max-content max-content max-content;
+    align-items: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 3px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.history-item:hover { background: rgba(255,255,255,0.08); }
+
+.history-round { 
+    font-size: 0.75rem; 
+    color: #666; 
+    font-weight: bold;
+}
+
+.history-dice-nums { 
+    font-size: 1.05rem; 
+    color: white; 
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-total { 
+    font-size: 1.2rem; 
+    font-weight: 900; 
+    text-align: center;
+    min-width: 28px;
+}
+
+.history-item.big .history-total { color: #ff4444; text-shadow: 0 0 5px rgba(255, 68, 68, 0.5); }
+.history-item.small .history-total { color: #4488ff; text-shadow: 0 0 5px rgba(68, 136, 255, 0.5); }
+.history-item.triple .history-total { color: var(--gold-light); text-shadow: 0 0 8px rgba(244, 208, 63, 0.6); }
+
+.history-size { 
+    font-size: 1.05rem; 
+    font-weight: 900; 
+    min-width: 24px;
+    text-align: center;
+}
+
+.history-item.big .history-size { color: #ff4444; }
+.history-item.small .history-size { color: #4488ff; }
+.history-item.triple .history-size { color: var(--gold-light); }
+
+.empty-history {
+    text-align: center;
+    color: #666;
+    padding: 15px;
+    font-size: 0.75rem;
+}
+
+/* 中奖动画 */
+@keyframes winGlow {
+    0% { 
+        box-shadow: 0 0 0px #ffff00; 
+        border-color: rgba(255,255,255,0.15); 
+        background: inherit;
+        filter: brightness(1);
+    }
+    25% {
+        box-shadow: 0 0 40px #ffff00, 0 0 60px rgba(255, 255, 0, 0.8), inset 0 0 30px rgba(255, 255, 0, 0.3);
+        border-color: #ffff00;
+        background: linear-gradient(135deg, rgba(255, 255, 0, 0.4), rgba(255, 215, 0, 0.3));
+        transform: scale(1.05);
+        filter: brightness(1.8) saturate(1.5);
+    }
+    50% { 
+        box-shadow: 0 0 50px #ff6600, 0 0 80px rgba(255, 102, 0, 0.9), inset 0 0 40px rgba(255, 102, 0, 0.4); 
+        border-color: #ff6600; 
+        background: linear-gradient(135deg, rgba(255, 102, 0, 0.5), rgba(255, 69, 0, 0.4));
+        transform: scale(1.08); 
+        filter: brightness(2) saturate(2);
+    }
+    75% {
+        box-shadow: 0 0 40px #ffff00, 0 0 60px rgba(255, 255, 0, 0.8), inset 0 0 30px rgba(255, 255, 0, 0.3);
+        border-color: #ffff00;
+        background: linear-gradient(135deg, rgba(255, 255, 0, 0.4), rgba(255, 215, 0, 0.3));
+        transform: scale(1.05);
+        filter: brightness(1.8) saturate(1.5);
+    }
+    100% { 
+        box-shadow: 0 0 0px #ffff00; 
+        border-color: rgba(255,255,255,0.15); 
+        background: inherit;
+    }
+}
+
+.winning { 
+    animation: winGlow 0.8s ease-in-out infinite !important; 
+    z-index: 100; 
+    position: relative;
+}
+
+/* 游戏结束动画 */
+.game-over-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.5s ease;
+}
+
+.game-over-content {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 5px solid var(--gold);
+    border-radius: 20px;
+    padding: 60px 80px;
+    text-align: center;
+    box-shadow: 
+        0 0 50px rgba(212, 175, 55, 0.5),
+        0 20px 60px rgba(0, 0, 0, 0.8),
+        inset 0 0 30px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.winner-text {
+    font-size: 5rem;
+    font-weight: 900;
+    color: var(--gold-light);
+    text-shadow: 
+        0 0 20px rgba(255, 215, 0, 0.8),
+        0 0 40px rgba(255, 215, 0, 0.6),
+        0 5px 10px rgba(0, 0, 0, 0.8);
+    margin-bottom: 30px;
+    animation: textGlow 1.5s ease-in-out infinite;
+    letter-spacing: 10px;
+}
+
+.winner-subtitle {
+    font-size: 2.5rem;
+    color: white;
+    margin-bottom: 40px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.restart-btn {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+    color: white;
+    border: none;
+    padding: 20px 60px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 
+        0 5px 0 #8b6914,
+        0 10px 25px rgba(212, 175, 55, 0.5);
+    transition: all 0.2s;
+    letter-spacing: 3px;
+}
+
+.restart-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 8px 0 #8b6914,
+        0 15px 35px rgba(212, 175, 55, 0.6);
+}
+
+.restart-btn:active {
+    transform: translateY(3px);
+    box-shadow: 
+        0 2px 0 #8b6914,
+        0 5px 15px rgba(212, 175, 55, 0.4);
+}
+
+/* 烟花效果 */
+.firework {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: var(--gold-light);
+    border-radius: 50%;
+    animation: explode 1.8s ease-out forwards;
+    pointer-events: none;
+}
+
+.firework::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: inherit;
+    border-radius: 50%;
+    animation: pulse 0.5s ease-out infinite;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+    50% { transform: scale(1.05) rotate(2deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes textGlow {
+    0%, 100% { 
+        text-shadow: 
+            0 0 20px rgba(255, 215, 0, 0.8),
+            0 0 40px rgba(255, 215, 0, 0.6),
+            0 5px 10px rgba(0, 0, 0, 0.8);
+    }
+    50% { 
+        text-shadow: 
+            0 0 30px rgba(255, 215, 0, 1),
+            0 0 60px rgba(255, 215, 0, 0.8),
+            0 0 80px rgba(255, 215, 0, 0.6),
+            0 5px 10px rgba(0, 0, 0, 0.8);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes explode {
+    0% { 
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% { 
+        transform: translate(var(--x), var(--y)) scale(0.3);
+        opacity: 0;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* 骰子样式 */
+.dice {
+    width: 30px;
+    height: 30px;
+    background: white;
+    border-radius: 5px;
+    display: grid;
+    grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+    padding: 3px;
+    gap: 0;
+    box-shadow: 
+        0 2px 4px rgba(0,0,0,0.3),
+        inset 0 1px 1px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.dice .dot {
+    width: 5px;
+    height: 5px;
+    background: #d32f2f;
+    border-radius: 50%;
+    margin: auto;
+}
+
+/* 隐藏所有点，只显示需要的 */
+.dice .dot {
+    display: none;
+}
+
+/* 中等屏幕响应式适配（1400px - 1600px） */
+@media screen and (max-width: 1600px) and (min-width: 1401px) {
+    .header {
+        gap: 15px; /* 减小间距 */
+        padding: 8px 15px; /* 减小内边距 */
+    }
+    
+    .title {
+        font-size: 1.7rem; /* 稍微减小标题字体 */
+    }
+    
+    .header-chip-section {
+        gap: 10px; /* 减小筹码间距 */
+        padding: 6px 12px; /* 减小内边距 */
+    }
+    
+    .chip {
+        width: 38px; /* 稍微减小筹码大小 */
+        height: 38px;
+        min-width: 38px;
+        min-height: 38px;
+    }
+    
+    .score-card {
+        min-width: 200px; /* 减小最小宽度 */
+        max-width: 300px; /* 减小最大宽度 */
+        padding: 5px 12px; /* 减小内边距 */
+    }
+    
+    .score-display {
+        font-size: 1.3rem; /* 稍微减小字体 */
+        min-width: 55px;
+    }
+    
+    .round-and-clear-container {
+        min-width: 140px; /* 减小最小宽度 */
+        max-width: 160px; /* 减小最大宽度 */
+    }
+    
+    .round-counter {
+        padding: 6px 10px; /* 减小内边距 */
+        gap: 6px;
+    }
+    
+    .round-number {
+        font-size: 1.2rem; /* 稍微减小字体 */
+        padding: 3px 10px;
+        min-width: 35px;
+    }
+    
+    .clear-bets-btn {
+        padding: 6px 10px; /* 减小内边距 */
+        font-size: 0.8rem; /* 稍微减小字体 */
+    }
+}
+
+/* iPad 和小屏幕响应式适配 */
+@media screen and (max-width: 1400px) {
+    .game-container {
+        grid-template-columns: 170px 1fr;
+        gap: 4px;
+        padding: 4px;
+    }
+    
+    /* Header响应式优化 */
+    .header {
+        gap: 12px; /* 进一步减小间距 */
+        padding: 8px 12px; /* 减小内边距 */
+        flex-wrap: nowrap !important; /* 不换行，始终保持左中右布局 */
+        align-items: center !important; /* 垂直居中对齐 */
+    }
+    
+    .title {
+        font-size: 1.5rem; /* 减小标题字体 */
+        flex: 0 0 auto; /* 固定大小 */
+    }
+    
+    .header-chip-section {
+        gap: 8px; /* 减小筹码间距 */
+        padding: 6px 10px; /* 减小内边距 */
+        flex: 0 1 auto; /* 允许收缩 */
+        min-width: 0;
+    }
+    
+    .chip {
+        width: 36px; /* 减小筹码大小 */
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+    }
+    
+    .chip-selector {
+        gap: 6px; /* 减小筹码之间的间距 */
+    }
+    
+    .header-bet-info {
+        font-size: 0.85rem; /* 稍微减小字体 */
+        gap: 8px;
+        padding-left: 10px;
+    }
+    
+    .header-bet-info strong {
+        font-size: 1.1rem; /* 稍微减小字体 */
+    }
+    
+    .header-clear-btn {
+        padding: 3px 10px; /* 减小内边距 */
+        font-size: 0.75rem; /* 稍微减小字体 */
+    }
+    
+    .dice-inputs {
+        gap: 10px;
+    }
+    
+    .dice-input-group {
+        padding: 4px 6px;
+        gap: 6px;
+    }
+    
+    .dice-selector {
+        gap: 4px;
+    }
+    
+    .dice-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px !important; /* 防止宽度被压缩 */
+        flex-shrink: 0 !important; /* 不允许收缩 */
+    }
+    
+    .score-section {
+        gap: 10px;
+        flex: 1 1 auto; /* 占据可用空间 */
+        min-width: 0; /* 允许收缩 */
+    }
+    
+    .score-cards-container {
+        gap: 8px; /* 减小间距 */
+        flex-wrap: wrap; /* 允许换行 */
+    }
+    
+    .score-card {
+        gap: 8px;
+        padding: 5px 12px;
+        min-width: 180px; /* 减小最小宽度 */
+        max-width: 280px; /* 减小最大宽度 */
+        flex: 1 1 auto; /* 允许收缩 */
+    }
+    
+    .score-card h2 {
+        font-size: 0.9rem;
+    }
+    
+    .score-display {
+        font-size: 1.4rem;
+        min-width: 50px;
+    }
+    
+    .score-btn {
+        min-width: 38px;
+        height: 22px;
+        font-size: 0.65rem;
+    }
+    
+    .round-and-clear-container {
+        flex: 0 0 auto; /* 固定大小 */
+        min-width: 130px; /* 减小最小宽度 */
+        max-width: 150px; /* 减小最大宽度 */
+    }
+    
+    .round-counter {
+        padding: 5px 10px; /* 减小内边距 */
+        gap: 5px;
+    }
+    
+    .round-number {
+        font-size: 1.1rem; /* 稍微减小字体 */
+        padding: 3px 8px;
+        min-width: 32px;
+    }
+    
+    .round-label {
+        font-size: 0.8rem; /* 稍微减小字体 */
+    }
+    
+    .round-reset-btn {
+        padding: 3px 8px; /* 减小内边距 */
+        font-size: 0.7rem; /* 稍微减小字体 */
+    }
+    
+    .clear-bets-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .clear-bets-btn .btn-icon {
+        font-size: 0.9rem;
+    }
+    
+    .clear-bets-btn .btn-text {
+        font-size: 0.8rem;
+    }
+    
+    .double-grid {
+        gap: 2px;
+    }
+    
+    .dice {
+        width: 26px;
+        height: 26px;
+        padding: 2px;
+    }
+    
+    .dice .dot {
+        width: 4px;
+        height: 4px;
+    }
+    
+    .double-dice {
+        gap: 1px;
+    }
+    
+    .betting-table {
+        padding: 6px;
+        gap: 6px;
+    }
+    
+    .bet-odds {
+        font-size: 0.65rem;
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    .game-container {
+        grid-template-columns: 150px 1fr;
+        gap: 3px;
+        padding: 3px;
+    }
+    
+    /* Header响应式优化 */
+    .header {
+        gap: 10px; /* 进一步减小间距 */
+        padding: 6px 10px; /* 减小内边距 */
+        flex-wrap: nowrap !important; /* 不换行，始终保持左中右布局 */
+        align-items: center !important; /* 垂直居中对齐 */
+    }
+    
+    .title {
+        font-size: 1.3rem; /* 进一步减小标题字体 */
+        flex: 0 0 auto;
+    }
+    
+    .header-chip-section {
+        gap: 6px; /* 进一步减小筹码间距 */
+        padding: 5px 8px; /* 减小内边距 */
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+    
+    .chip {
+        width: 32px; /* 进一步减小筹码大小 */
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 0.7rem; /* 稍微减小字体 */
+    }
+    
+    .chip-selector {
+        gap: 5px; /* 减小筹码之间的间距 */
+    }
+    
+    .header-bet-info {
+        font-size: 0.8rem; /* 稍微减小字体 */
+        gap: 6px;
+        padding-left: 8px;
+    }
+    
+    .header-bet-info strong {
+        font-size: 1rem; /* 稍微减小字体 */
+    }
+    
+    .header-clear-btn {
+        padding: 2px 8px; /* 减小内边距 */
+        font-size: 0.7rem; /* 稍微减小字体 */
+    }
+    
+    .dice-inputs {
+        gap: 8px;
+    }
+    
+    .dice-input-group {
+        padding: 3px 5px;
+        gap: 5px;
+    }
+    
+    .dice-selector {
+        gap: 3px;
+    }
+    
+    .dice-btn {
+        width: 28px;
+        height: 28px;
+        min-width: 28px !important; /* 防止宽度被压缩 */
+        flex-shrink: 0 !important; /* 不允许收缩 */
+    }
+    
+    .dice-input-group label {
+        font-size: 0.8rem;
+        min-width: 30px;
+    }
+    
+    .score-section {
+        gap: 8px;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    
+    .score-cards-container {
+        gap: 6px; /* 减小间距 */
+        flex-wrap: wrap; /* 允许换行 */
+    }
+    
+    .score-card {
+        gap: 6px;
+        padding: 4px 10px;
+        min-width: 160px; /* 进一步减小最小宽度 */
+        max-width: 250px; /* 进一步减小最大宽度 */
+        flex: 1 1 auto;
+    }
+    
+    .score-card h2 {
+        font-size: 0.85rem;
+    }
+    
+    .score-display {
+        font-size: 1.3rem;
+        min-width: 45px;
+    }
+    
+    .score-btn {
+        min-width: 35px;
+        height: 20px;
+        font-size: 0.6rem;
+        padding: 2px 4px;
+    }
+    
+    .round-and-clear-container {
+        flex: 0 0 auto;
+        min-width: 120px; /* 进一步减小最小宽度 */
+        max-width: 140px; /* 进一步减小最大宽度 */
+    }
+    
+    .round-counter {
+        padding: 4px 8px; /* 减小内边距 */
+        gap: 4px;
+    }
+    
+    .round-number {
+        font-size: 1rem; /* 稍微减小字体 */
+        padding: 2px 6px;
+        min-width: 30px;
+    }
+    
+    .round-label {
+        font-size: 0.75rem; /* 稍微减小字体 */
+    }
+    
+    .round-reset-btn {
+        padding: 2px 6px; /* 减小内边距 */
+        font-size: 0.65rem; /* 稍微减小字体 */
+    }
+    
+    .clear-bets-btn {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+    }
+    
+    .clear-bets-btn .btn-icon {
+        font-size: 0.85rem;
+    }
+    
+    .clear-bets-btn .btn-text {
+        font-size: 0.75rem;
+    }
+    
+    .double-grid {
+        gap: 1px;
+    }
+    
+    .bet-box.double {
+        padding: 2px;
+    }
+    
+    .double-dice .dice {
+        width: 20px;
+        height: 20px;
+        padding: 1.5px;
+        border-radius: 3px;
+    }
+    
+    .double-dice .dot {
+        width: 3px;
+        height: 3px;
+    }
+    
+    .dice {
+        width: 24px;
+        height: 24px;
+        padding: 2px;
+        border-radius: 4px;
+    }
+    
+    .dice .dot {
+        width: 3px;
+        height: 3px;
+    }
+    
+    .double-dice {
+        gap: 1px;
+    }
+    
+    .betting-table {
+        padding: 5px;
+        gap: 5px;
+    }
+    
+    .top-bets {
+        gap: 4px;
+    }
+    
+    .total-grid {
+        gap: 3px;
+    }
+    
+    .triple-grid {
+        gap: 3px;
+    }
+    
+    .single-grid {
+        gap: 3px;
+    }
+    
+    .bet-odds {
+        font-size: 0.6rem;
+    }
+    
+    .bet-number {
+        font-size: 1rem;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .game-container {
+        grid-template-columns: 150px 1fr;
+        gap: 2px;
+        padding: 2px;
+    }
+    
+    .left-panel {
+        padding: 6px 12px;
+        gap: 10px;
+    }
+    
+    .dice-inputs {
+        gap: 6px;
+    }
+    
+    .dice-input-group {
+        padding: 3px 4px;
+        gap: 4px;
+    }
+    
+    .dice-selector {
+        gap: 2px;
+    }
+    
+    .dice-btn {
+        width: 26px;
+        height: 26px;
+        min-width: 26px !important; /* 防止宽度被压缩 */
+        flex-shrink: 0 !important; /* 不允许收缩 */
+    }
+    
+    .dice-input-group label {
+        font-size: 0.75rem;
+        min-width: 28px;
+    }
+    
+    .dice-input-section h3 {
+        font-size: 0.8rem;
+    }
+    
+    .score-section {
+        gap: 6px;
+    }
+    
+    .score-card {
+        gap: 5px;
+        padding: 3px 8px;
+    }
+    
+    .score-card h2 {
+        font-size: 0.8rem;
+    }
+    
+    /* 双骰组合压缩 */
+    .double-grid {
+        gap: 1px;
+    }
+    
+    .bet-box.double {
+        padding: 2px;
+    }
+    
+    .double-dice .dice {
+        width: 18px;
+        height: 18px;
+        padding: 1px;
+    }
+    
+    .double-dice .dot {
+        width: 2.5px;
+        height: 2.5px;
+    }
+    
+    .bet-odds {
+        font-size: 0.5rem;
+    }
+    
+    /* 历史面板优化 */
+    .history-item {
+        grid-template-columns: 28px max-content max-content max-content;
+    }
+    
+    .history-dice-nums {
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .history-total {
+        font-size: 1.1rem;
+    }
+    
+    .history-size {
+        font-size: 0.95rem;
+    }
+    
+    .score-display {
+        font-size: 1.2rem;
+        min-width: 40px;
+    }
+    
+    .score-btn {
+        min-width: 32px;
+        height: 18px;
+        font-size: 0.55rem;
+        padding: 2px 3px;
+    }
+    
+    .score-controls {
+        gap: 2px;
+    }
+    
+    .double-grid {
+        gap: 1px;
+    }
+    
+    .dice {
+        width: 22px;
+        height: 22px;
+        padding: 2px;
+        border-radius: 3px;
+    }
+    
+    .dice .dot {
+        width: 3px;
+        height: 3px;
+    }
+    
+    .double-dice, .pair-dice, .triple-dice {
+        gap: 1px;
+    }
+    
+    .betting-table {
+        padding: 4px;
+        gap: 4px;
+    }
+    
+    .top-bets {
+        gap: 3px;
+    }
+    
+    .total-grid, .triple-grid, .single-grid {
+        gap: 2px;
+    }
+    
+    .bet-odds {
+        font-size: 0.55rem;
+        margin-top: 1px;
+    }
+    
+    .bet-number {
+        font-size: 0.95rem;
+    }
+    
+    .bet-name {
+        font-size: 1.2rem;
+    }
+}
+
+/* 超小屏幕适配 */
+@media screen and (max-width: 900px) {
+    .round-and-clear-container {
+        gap: 6px;
+    }
+    
+    .round-counter {
+        padding: 6px 10px;
+        gap: 6px;
+    }
+    
+    .round-label {
+        font-size: 0.8rem;
+    }
+    
+    .round-number {
+        font-size: 1.2rem;
+        padding: 3px 8px;
+        min-width: 35px;
+    }
+    
+    .round-reset-btn {
+        padding: 3px 8px;
+        font-size: 0.7rem;
+    }
+    
+    .score-section {
+        gap: 8px;
+    }
+    
+    .score-card {
+        flex: 1 1 100%;
+        min-width: 200px;
+    }
+    
+    /* 双骰组合进一步压缩 */
+    .double-grid {
+        gap: 0.5px;
+    }
+    
+    .bet-box.double {
+        padding: 1px;
+        min-height: 45px;
+    }
+    
+    .double-dice {
+        gap: 1px;
+    }
+    
+    .double-dice .dice {
+        width: 16px;
+        height: 16px;
+        padding: 0.5px;
+        border-radius: 2px;
+    }
+    
+    .double-dice .dot {
+        width: 2px;
+        height: 2px;
+    }
+    
+    .bet-odds {
+        font-size: 0.45rem;
+        margin-top: 1px;
+    }
+    
+    /* 历史面板进一步优化 */
+    .history-item {
+        grid-template-columns: 26px max-content max-content max-content;
+    }
+    
+    .history-round {
+        font-size: 0.7rem;
+    }
+    
+    .history-dice-nums {
+        font-size: 0.9rem;
+        letter-spacing: 0px;
+    }
+    
+    .history-total {
+        font-size: 1rem;
+    }
+    
+    .history-size {
+        font-size: 0.9rem;
+    }
+}
+
+/* ============ 移动端820px宽度特殊布局 ============ */
+/* 左侧：标题 | 中间：积分和筹码（垂直） | 右侧：局数计分牌 */
+@media screen and (max-width: 820px) and (min-width: 769px) {
+    .header {
+        display: grid !important; /* 使用grid布局实现三列 */
+        grid-template-columns: auto 1fr auto !important; /* 左中右三列 */
+        grid-template-rows: auto auto !important; /* 两行：第一行是标题和局数，第二行是积分和筹码 */
+        gap: 8px !important;
+        padding: 8px 12px !important;
+        align-items: start !important;
+    }
+    
+    /* 多人模式下：只使用一行，移除第二行 */
+    body.multi-mode .header {
+        grid-template-rows: auto !important; /* 只有一行 */
+    }
+    
+    /* 多人模式下：确保第二行的元素不占据空间 */
+    body.multi-mode .header-chip-section {
+        display: none !important; /* 隐藏筹码区域 */
+    }
+    
+    /* 多人模式下：局数计数器只占据第一行，不跨越两行 */
+    body.multi-mode .round-and-clear-container {
+        grid-row: 1 !important; /* 只占据第一行 */
+    }
+    
+    /* 多人模式下：玩家区域占据中间列第一行 */
+    body.multi-mode .multi-players-section {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+    }
+    
+    /* 左侧：标题 - 第一行第一列 */
+    .title {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        font-size: 1.4rem !important;
+        align-self: center !important;
+        white-space: nowrap !important;
+        margin-right: auto !important;
+    }
+    
+    /* 中间：积分牌区域 - 第一行第二列，占据中间列 */
+    .score-section {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin-bottom: 6px !important; /* 与筹码区域的间距 */
+        box-sizing: border-box !important;
+    }
+    
+    .score-cards-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        gap: 8px !important;
+        flex-wrap: nowrap !important;
+        box-sizing: border-box !important;
+        flex: 1 1 100% !important; /* 占据全部可用空间 */
+    }
+    
+    .score-card {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        padding: 4px 8px !important;
+    }
+    
+    .score-card.banker {
+        flex: 1 !important; /* 均分父容器空间 */
+        min-width: 0 !important; /* 允许收缩 */
+    }
+    
+    .score-card.player {
+        flex: 1 !important; /* 均分父容器空间 */
+        min-width: 0 !important; /* 允许收缩 */
+    }
+    
+    .score-card h2 {
+        font-size: 0.85rem !important;
+    }
+    
+    .score-display {
+        font-size: 1.1rem !important;
+        min-width: 45px !important;
+    }
+    
+    .score-btn {
+        min-width: 30px !important;
+        height: 18px !important;
+        font-size: 0.6rem !important;
+        padding: 2px 4px !important;
+    }
+    
+    /* 中间：筹码区域 - 第二行第二列，在积分下面 */
+    .header-chip-section {
+        grid-column: 2 !important;
+        grid-row: 2 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        padding: 6px 8px !important;
+        margin: 0 !important;
+    }
+    
+    .chip-selector {
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .chip {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .header-bet-info {
+        font-size: 0.8rem !important;
+        gap: 6px !important;
+        padding-left: 8px !important;
+    }
+    
+    .header-bet-info strong {
+        font-size: 1rem !important;
+    }
+    
+    .header-clear-btn {
+        padding: 2px 8px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    /* 右侧：局数计分牌 - 第一行第三列，跨越两行 */
+    .round-and-clear-container {
+        grid-column: 3 !important;
+        grid-row: 1 / 3 !important; /* 跨越两行 */
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        align-items: center !important; /* 居中对齐 */
+        min-width: 120px !important;
+        max-width: 140px !important;
+        align-self: start !important;
+    }
+    
+    .round-counter {
+        padding: 4px 8px !important;
+        gap: 4px !important;
+        justify-content: center !important; /* 水平居中 */
+    }
+    
+    .round-number {
+        font-size: 1rem !important;
+        padding: 2px 6px !important;
+        min-width: 30px !important;
+    }
+    
+    .round-label {
+        font-size: 0.75rem !important;
+    }
+    
+    .round-reset-btn {
+        padding: 2px 6px !important;
+        font-size: 0.65rem !important;
+    }
+    
+    .clear-bets-btn {
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+        width: 100% !important;
+    }
+    
+    /* 移动端820px多人模式：当玩家数量>=4时，grid布局优化 */
+    .multi-players-section.has-many-players {
+        grid-template-columns: 1fr 1fr !important; /* 两列 */
+        gap: 4px !important; /* 减小间距 */
+    }
+    
+    .multi-players-section.has-many-players .player-chip-row {
+        min-width: 0 !important; /* 允许收缩 */
+        flex: 1 1 auto !important; /* 自适应大小 */
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .header {
+        flex-wrap: wrap;
+        padding: 8px 15px;
+        gap: 15px;
+    }
+    
+    .title {
+        font-size: 1.5rem;
+        flex-basis: 100%;
+        text-align: center;
+    }
+    
+    .header-chip-section {
+        flex: 1 1 100%;
+        order: 3;
+    }
+    
+    .score-section {
+        flex: 1 1 100%;
+        gap: 10px;
+        order: 2;
+    }
+    
+    .score-cards-container {
+        gap: 10px;
+        flex-wrap: wrap; /* 小屏幕下允许换行 */
+        width: 100%; /* 占满父容器宽度 */
+        flex: 1; /* 占据可用空间 */
+    }
+    
+    .score-card {
+        flex: 1 1 calc(50% - 5px);
+        min-width: 0;
+    }
+}
+
+/* 骰子1: 中心 */
+.dice[data-value="1"] .dot:nth-child(5) { 
+    display: block;
+    grid-area: 2 / 2; 
+}
+
+/* 骰子2: 左上和右下 */
+.dice[data-value="2"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="2"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}
+
+/* 骰子3: 左上、中心、右下 */
+.dice[data-value="3"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="3"] .dot:nth-child(5) { 
+    display: block;
+    grid-area: 2 / 2; 
+}
+.dice[data-value="3"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}
+
+/* 骰子4: 四角 */
+.dice[data-value="4"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="4"] .dot:nth-child(2) { 
+    display: block;
+    grid-area: 1 / 3; 
+}
+.dice[data-value="4"] .dot:nth-child(4) { 
+    display: block;
+    grid-area: 3 / 1; 
+}
+.dice[data-value="4"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}
+
+/* 骰子5: 四角 + 中心 */
+.dice[data-value="5"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="5"] .dot:nth-child(2) { 
+    display: block;
+    grid-area: 1 / 3; 
+}
+.dice[data-value="5"] .dot:nth-child(4) { 
+    display: block;
+    grid-area: 3 / 1; 
+}
+.dice[data-value="5"] .dot:nth-child(5) { 
+    display: block;
+    grid-area: 2 / 2; 
+}
+.dice[data-value="5"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}
+
+/* 骰子6: 两列六个点 */
+.dice[data-value="6"] .dot:nth-child(1) { 
+    display: block;
+    grid-area: 1 / 1; 
+}
+.dice[data-value="6"] .dot:nth-child(2) { 
+    display: block;
+    grid-area: 1 / 3; 
+}
+.dice[data-value="6"] .dot:nth-child(3) { 
+    display: block;
+    grid-area: 2 / 1; 
+}
+.dice[data-value="6"] .dot:nth-child(4) { 
+    display: block;
+    grid-area: 2 / 3; 
+}
+.dice[data-value="6"] .dot:nth-child(5) { 
+    display: block;
+    grid-area: 3 / 1; 
+}
+.dice[data-value="6"] .dot:nth-child(6) { 
+    display: block;
+    grid-area: 3 / 3; 
+}
+
+/* 模式切换按钮 - 可拖动悬浮按钮 */
+.mode-toggle-btn {
+    position: fixed;
+    top: 50%;
+    right: -22.5px; /* 初始隐藏一半 */
+    transform: translateY(-50%);
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    border: 2px solid var(--gold);
+    color: white;
+    font-size: 1.5rem;
+    cursor: grab;
+    box-shadow: 
+        0 4px 12px rgba(0,0,0,0.4),
+        inset 0 1px 2px rgba(255,255,255,0.3);
+    transition: right 0.3s ease, left 0.3s ease, transform 0.15s ease;
+    z-index: 1001;
+    user-select: none;
+    touch-action: none;
+}
+
+.mode-toggle-btn:active {
+    cursor: grabbing;
+}
+
+.mode-toggle-btn.dragging {
+    transition: none;
+}
+
+.mode-toggle-btn.expanded {
+    right: 10px;
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 
+        0 6px 16px rgba(0,0,0,0.5),
+        inset 0 1px 2px rgba(255,255,255,0.4);
+}
+
+.mode-toggle-btn.left-side {
+    right: auto;
+    left: -22.5px;
+}
+
+.mode-toggle-btn.left-side.expanded {
+    left: 10px;
+    right: auto;
+}
+
+/* 模态框 */
+.mode-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.mode-modal.active {
+    display: flex;
+}
+
+.mode-modal-content {
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    border: 3px solid var(--gold);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+}
+
+.mode-modal-content h2 {
+    color: var(--gold-light);
+    text-align: center;
+    margin: 0 0 25px 0;
+    font-size: 1.8rem;
+    text-shadow: 0 0 10px rgba(244, 208, 63, 0.5);
+}
+
+.mode-description {
+    color: #ccc;
+    text-align: center;
+    margin: 0 0 25px 0;
+    font-size: 1rem;
+}
+
+.player-count-options {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+.player-count-btn {
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.player-count-btn:hover {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, #3d566e, #34495e);
+    transform: scale(1.05);
+}
+
+.player-count-btn.selected {
+    border-color: var(--gold-light);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    box-shadow: 0 0 15px rgba(244, 208, 63, 0.5);
+}
+
+.mode-modal-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.mode-cancel-btn,
+.mode-confirm-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-cancel-btn {
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+}
+
+.mode-cancel-btn:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.5);
+}
+
+.mode-confirm-btn {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    border: 2px solid var(--gold);
+    color: white;
+}
+
+.mode-confirm-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(244, 208, 63, 0.4);
+}
+
+/* ============ 多人模式样式 ============ */
+
+/* 多人模式：局数计数器和清除按钮居中 */
+body.multi-mode .round-and-clear-container {
+    align-items: center !important; /* 居中对齐 */
+    align-self: center !important; /* 在header中垂直居中 */
+}
+
+body.multi-mode .round-counter {
+    justify-content: center !important; /* 水平居中 */
+}
+
+body.multi-mode .clear-bets-btn {
+    width: 100% !important; /* 占满容器宽度 */
+    justify-content: center !important; /* 内容居中 */
+}
+
+/* 多人模式玩家区域 */
+.multi-players-section {
+    flex: 1 1 auto; /* 占据剩余空间，可以压缩 */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 100%;
+    overflow-y: auto;
+    min-width: 0; /* 允许压缩，防止溢出 */
+}
+
+/* 当玩家数量>=4时，使用grid布局，每行显示两个玩家 */
+.multi-players-section.has-many-players {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important; /* 两列 */
+    gap: 6px !important; /* 减小间距 */
+    align-content: start !important; /* 顶部对齐 */
+}
+
+.player-chip-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 8px 12px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.player-chip-row:hover {
+    background: rgba(0,0,0,0.4);
+}
+
+.player-chip-row.active {
+    border-color: currentColor;
+    background: rgba(0,0,0,0.5);
+    box-shadow: 0 0 15px currentColor;
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 100px;
+}
+
+.player-color-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.player-name {
+    font-weight: bold;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.player-balance {
+    font-weight: 900;
+    color: var(--gold-light);
+    font-size: 1rem;
+    min-width: 4.5rem; /* 使用rem动态设置宽度，约70px */
+    width: 4.5rem; /* 固定宽度，使用rem单位 */
+    text-align: right;
+    text-shadow: 0 0 5px rgba(244, 208, 63, 0.3);
+    flex-shrink: 0; /* 不允许压缩 */
+}
+
+.player-chip-selector {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+}
+
+.player-chip-selector .chip {
+    width: 40px;
+    height: 40px;
+    font-size: 0.75rem;
+}
+
+.player-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.player-control-btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.player-control-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* ============ PC端小于1100px时的特殊布局 ============ */
+/* 左侧：标题 | 中间：积分和筹码（垂直） | 右侧：局数计分牌 */
+@media screen and (min-width: 900px) and (max-width: 1100px) {
+    /* 使用grid布局实现三列布局 */
+    .header {
+        display: grid !important; /* 使用grid布局 */
+        grid-template-columns: auto 1fr auto !important; /* 左中右三列 */
+        grid-template-rows: auto auto !important; /* 两行：第一行是标题和局数，第二行是积分和筹码 */
+        gap: 10px !important;
+        padding: 8px 15px !important;
+        align-items: start !important;
+    }
+    
+    /* 多人模式下：只使用一行，移除第二行 */
+    body.multi-mode .header {
+        grid-template-rows: auto !important; /* 只有一行 */
+    }
+    
+    /* 多人模式下：确保第二行的元素不占据空间 */
+    body.multi-mode .header-chip-section {
+        display: none !important; /* 隐藏筹码区域 */
+    }
+    
+    /* 多人模式下：局数计数器只占据第一行，不跨越两行 */
+    body.multi-mode .round-and-clear-container {
+        grid-row: 1 !important; /* 只占据第一行 */
+    }
+    
+    /* 多人模式下：玩家区域占据中间列第一行 */
+    body.multi-mode .multi-players-section {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+    }
+    
+    /* 左侧：标题 - 第一行第一列 */
+    .title {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        font-size: 1.6rem !important;
+        align-self: center !important;
+        white-space: nowrap !important;
+        margin-right: auto !important;
+    }
+    
+    /* 中间：积分牌区域 - 第一行第二列，占据中间列 */
+    .score-section {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin-bottom: 8px !important; /* 与筹码区域的间距 */
+        box-sizing: border-box !important;
+    }
+    
+    .score-cards-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        gap: 10px !important;
+        flex-wrap: nowrap !important;
+        box-sizing: border-box !important;
+        flex: 1 1 100% !important; /* 占据全部可用空间 */
+    }
+    
+    .score-card {
+        flex: 0 1 auto !important; /* 不拉伸，根据内容调整 */
+        min-width: 0 !important;
+    }
+    
+    .score-card.banker {
+        flex: 1 !important; /* 均分父容器空间 */
+        min-width: 0 !important; /* 允许收缩 */
+    }
+    
+    .score-card.player {
+        flex: 1 !important; /* 均分父容器空间 */
+        min-width: 0 !important; /* 允许收缩 */
+    }
+    
+    /* 中间：筹码区域 - 第二行第二列，在积分下面 */
+    .header-chip-section {
+        grid-column: 2 !important;
+        grid-row: 2 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        justify-content: flex-start !important; /* 左对齐 */
+        gap: 10px !important;
+        padding: 8px 12px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
+    .chip-selector {
+        gap: 8px !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .chip {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        min-height: 38px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .header-bet-info {
+        font-size: 0.9rem !important;
+        gap: 8px !important;
+        padding-left: 12px !important;
+    }
+    
+    .header-bet-info strong {
+        font-size: 1.2rem !important;
+    }
+    
+    .header-clear-btn {
+        padding: 4px 10px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    /* 右侧：局数计分牌 - 第一行第三列，跨越两行 */
+    .round-and-clear-container {
+        grid-column: 3 !important;
+        grid-row: 1 / 3 !important; /* 跨越两行 */
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        align-items: center !important; /* 居中对齐 */
+        min-width: 140px !important;
+        max-width: 160px !important;
+        align-self: start !important;
+    }
+    
+    .round-counter {
+        padding: 6px 12px !important;
+        gap: 6px !important;
+        justify-content: center !important; /* 水平居中 */
+    }
+    
+    .round-number {
+        font-size: 1.2rem !important;
+        padding: 3px 10px !important;
+        min-width: 35px !important;
+    }
+    
+    .round-label {
+        font-size: 0.85rem !important;
+    }
+    
+    .round-reset-btn {
+        padding: 3px 8px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .clear-bets-btn {
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+        width: 100% !important;
+    }
+    
+    /* PC端900-1100px多人模式：当玩家数量>=4时，grid布局优化 */
+    .multi-players-section.has-many-players {
+        grid-template-columns: 1fr 1fr !important; /* 两列 */
+        gap: 4px !important; /* 减小间距 */
+    }
+    
+    .multi-players-section.has-many-players .player-chip-row {
+        min-width: 0 !important; /* 允许收缩 */
+        flex: 1 1 auto !important; /* 自适应大小 */
+    }
+}
+
+/* ============ PC端优化（多人模式） ============ */
+/* 注意：1101px以上才应用PC端规则，避免与820px特殊布局冲突 */
+@media screen and (min-width: 1101px) {
+    /* PC端多人模式：减小闲家区域高度 */
+    .multi-players-section {
+        max-height: 140px !important; /* 进一步限制最大高度，让header更紧凑 */
+        gap: 3px !important; /* 进一步减小间距 */
+        flex: 1 1 auto !important; /* 占据剩余空间，可以压缩 */
+        min-width: 0 !important; /* 允许压缩，防止溢出 */
+    }
+    
+    /* PC端多人模式：当玩家数量>=4时，grid布局优化 */
+    .multi-players-section.has-many-players {
+        grid-template-columns: 1fr 1fr !important; /* 两列 */
+        gap: 4px !important; /* 减小间距 */
+        max-height: 120px !important; /* 进一步减小最大高度 */
+    }
+    
+    .multi-players-section.has-many-players .player-chip-row {
+        min-width: 0 !important; /* 允许收缩 */
+        flex: 1 1 auto !important; /* 自适应大小 */
+    }
+    
+    .player-chip-row {
+        padding: 3px 6px !important; /* 进一步减小内边距 */
+        gap: 6px !important; /* 进一步减小元素间距 */
+        min-height: 36px !important; /* 减小最小高度 */
+    }
+    
+    .player-info {
+        min-width: 70px !important; /* 进一步减小最小宽度 */
+        gap: 5px !important; /* 减小间距 */
+    }
+    
+    .player-color-indicator {
+        width: 14px !important; /* 进一步减小颜色指示器大小 */
+        height: 14px !important;
+    }
+    
+    .player-name {
+        font-size: 0.8rem !important; /* 进一步减小字体 */
+    }
+    
+    .player-balance {
+        font-size: 0.85rem !important; /* 进一步减小余额字体 */
+        min-width: 3.5rem !important; /* 使用rem动态设置宽度，约55px */
+        width: 3.5rem !important; /* 固定宽度，使用rem单位 */
+        flex-shrink: 0 !important; /* 不允许压缩 */
+    }
+    
+    .player-chip-selector {
+        gap: 3px !important; /* 进一步减小筹码间距 */
+    }
+    
+    .player-chip-selector .chip {
+        width: 30px !important; /* 进一步减小筹码大小 */
+        height: 30px !important;
+        font-size: 0.65rem !important; /* 减小字体 */
+        padding: 2px !important;
+    }
+    
+    .player-controls {
+        gap: 2px !important; /* 减小间距 */
+    }
+    
+    .player-control-btn {
+        padding: 2px 5px !important; /* 减小内边距 */
+        font-size: 0.6rem !important; /* 减小字体 */
+    }
+    
+    /* PC端header响应式优化 */
+    .header {
+        /* 移除max-height和overflow，不允许滚动条 */
+        overflow: visible;
+        flex-wrap: nowrap !important; /* 不换行，始终保持左中右布局 */
+        align-items: center !important; /* 垂直居中对齐 */
+        gap: 15px; /* 减小间距 */
+        padding: 8px 15px; /* 减小内边距 */
+        min-width: 0; /* 允许收缩 */
+    }
+    
+    /* PC端多人模式：优化header高度，使其更紧凑 */
+    body.multi-mode .header {
+        padding: 6px 12px !important; /* 进一步减小内边距 */
+        gap: 10px !important; /* 进一步减小间距 */
+        height: auto !important; /* 高度自适应 */
+        max-height: none !important; /* 移除最大高度限制 */
+        flex-wrap: nowrap !important; /* 不换行，始终保持左中右布局 */
+    }
+    
+    /* PC端标题优化 */
+    .title {
+        flex: 0 0 auto; /* 固定大小，不拉伸 */
+        font-size: 1.8rem;
+        align-self: center; /* 在header中垂直居中 */
+        min-width: 0; /* 允许收缩 */
+        flex-shrink: 0; /* 不允许收缩，保持标题大小 */
+        white-space: nowrap; /* 不换行 */
+    }
+    
+    /* PC端多人模式：标题更紧凑 */
+    body.multi-mode .title {
+        font-size: 1.6rem !important; /* 稍微减小字体 */
+        margin: 0 !important;
+        flex-shrink: 0 !important; /* 不允许收缩 */
+    }
+    
+    /* PC端计分区域优化 */
+    .score-section {
+        flex: 1 1 auto; /* 占据更多空间 */
+        gap: 10px;
+        min-width: 0;
+        align-self: center; /* 在header中垂直居中 */
+    }
+    
+    .score-cards-container {
+        gap: 10px;
+        width: 100%; /* 占满父容器宽度 */
+        flex: 1; /* 占据可用空间 */
+    }
+    
+    .score-card {
+        flex: 1;
+        min-width: 220px; /* 增大最小宽度 */
+        max-width: 350px; /* 增大最大宽度 */
+    }
+    
+    /* PC端局数计数器和清除按钮容器优化 */
+    .round-and-clear-container {
+        flex: 0 0 auto; /* 不拉伸，固定大小 */
+        flex-shrink: 0 !important; /* 不允许收缩，保持固定大小 */
+        min-width: 150px; /* 减小最小宽度 */
+        max-width: 180px; /* 减小最大宽度 */
+        align-items: center !important; /* 居中对齐 */
+    }
+    
+    /* PC端多人模式：确保局数计数器和清除按钮居中并更紧凑 */
+    body.multi-mode .round-and-clear-container {
+        align-items: center !important; /* 居中对齐 */
+        gap: 6px !important; /* 减小间距 */
+        min-width: 130px !important; /* 减小最小宽度 */
+        max-width: 150px !important; /* 减小最大宽度 */
+    }
+    
+    body.multi-mode .round-counter {
+        justify-content: center !important; /* 水平居中 */
+        padding: 4px 10px !important; /* 减小内边距 */
+        gap: 5px !important; /* 减小间距 */
+    }
+    
+    body.multi-mode .round-number {
+        font-size: 1.1rem !important; /* 稍微减小字体 */
+        padding: 2px 8px !important; /* 减小内边距 */
+        min-width: 32px !important; /* 减小最小宽度 */
+    }
+    
+    body.multi-mode .round-label {
+        font-size: 0.8rem !important; /* 稍微减小字体 */
+    }
+    
+    body.multi-mode .round-reset-btn {
+        padding: 2px 6px !important; /* 减小内边距 */
+        font-size: 0.65rem !important; /* 稍微减小字体 */
+    }
+    
+    body.multi-mode .clear-bets-btn {
+        width: 100% !important; /* 占满容器宽度 */
+        padding: 5px 10px !important; /* 减小内边距 */
+        font-size: 0.8rem !important; /* 稍微减小字体 */
+    }
+    
+    .round-counter {
+        padding: 6px 12px;
+        gap: 6px;
+    }
+    
+    .clear-bets-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+    
+    /* PC端筹码区域优化 */
+    .header-chip-section {
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: none; /* 移除最大宽度限制，允许筹码区域自然展开 */
+        flex-shrink: 1; /* 允许适度压缩，但优先保持大小 */
+    }
+    
+    /* PC端计分区域优化 */
+    .score-section {
+        flex: 1 1 auto; /* 占据更多空间 */
+        gap: 10px;
+        min-width: 0; /* 允许收缩 */
+        align-self: center; /* 在header中垂直居中 */
+        max-width: 100%; /* 防止溢出 */
+    }
+    
+    .score-cards-container {
+        gap: 10px;
+        width: 100%; /* 占满父容器宽度 */
+        flex: 1; /* 占据可用空间 */
+        min-width: 0; /* 允许收缩 */
+    }
+    
+    .score-card {
+        flex: 1;
+        min-width: 200px; /* 设置合理的最小宽度，但允许在小屏幕时收缩 */
+        max-width: 350px; /* 设置合理的最大宽度 */
+    }
+    
+    /* 确保核心押注区有足够空间 */
+    .betting-table {
+        min-height: 400px; /* 确保最小高度 */
+    }
+    
+    /* 优化主内容区布局 */
+    .main-content {
+        flex: 1;
+        min-height: 0;
+    }
+    
+    /* 多人模式下：减小骰子输入区内边距，让高度由内容撑起 */
+    body.multi-mode .left-panel {
+        flex-shrink: 0;
+        /* 移除max-height限制，让容器高度由内容撑起 */
+        padding: 4px 10px; /* 减小内边距 */
+        gap: 8px; /* 减小间距 */
+        align-items: flex-start; /* 改为flex-start，让内容自然撑开 */
+        min-height: auto; /* 确保最小高度由内容决定 */
+    }
+    
+    body.multi-mode .dice-input-section {
+        flex: 1 1 auto; /* 占满剩余宽度，可以伸缩 */
+        min-width: 0; /* 允许收缩，防止溢出 */
+        padding: 4px;
+        gap: 4px;
+        min-height: auto; /* 确保最小高度由内容决定 */
+    }
+    
+    body.multi-mode .dice-input-section h3 {
+        font-size: 0.75rem;
+        margin: 0;
+    }
+    
+    body.multi-mode .dice-inputs {
+        flex: 1; /* 占满父容器宽度 */
+        width: 100%; /* 确保占满宽度 */
+        gap: 6px; /* 减小骰子组之间的间距 */
+        min-height: auto; /* 确保最小高度由内容决定 */
+        /* flex子元素会自动均分空间 */
+    }
+    
+    body.multi-mode .dice-input-group {
+        flex: 1; /* 均分宽度 */
+        min-width: 0; /* 允许收缩，防止溢出 */
+        padding: 3px 5px; /* 减小内边距 */
+        gap: 4px;
+        min-height: auto; /* 确保最小高度由内容决定 */
+        align-items: flex-start; /* 改为flex-start，让内容自然撑开 */
+    }
+    
+    body.multi-mode .dice-selector {
+        gap: 2px; /* 减小骰子按钮之间的间距 */
+    }
+    
+    body.multi-mode .dice-btn {
+        width: 28px; /* 减小骰子按钮大小 */
+        height: 28px;
+        min-width: 28px !important; /* 防止宽度被压缩 */
+        flex-shrink: 0 !important; /* 不允许收缩 */
+        font-size: 0.75rem;
+        padding: 2px;
+        box-sizing: border-box; /* 确保宽度计算正确 */
+    }
+    
+    body.multi-mode .result-preview {
+        padding: 4px 8px; /* 减小内边距 */
+        gap: 6px; /* 减小间距 */
+    }
+    
+    body.multi-mode .preview-dice {
+        gap: 4px;
+    }
+    
+    body.multi-mode .preview-die {
+        width: 24px; /* 减小预览骰子大小 */
+        height: 24px;
+        font-size: 0.8rem;
+    }
+    
+    body.multi-mode .preview-info {
+        font-size: 0.7rem; /* 减小字体 */
+        padding: 2px 6px;
+    }
+    
+    body.multi-mode .confirm-btn {
+        padding: 5px 16px; /* 减小按钮内边距 */
+        font-size: 0.8rem; /* 减小字体 */
+    }
+}
+</style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- 顶部标题、筹码和计分 -->
+        <header class="header">
+            <h1 class="title">骰 宝</h1>
+            
+            <!-- 模式切换按钮 -->
+            <button class="mode-toggle-btn" onclick="openModeModal()" title="切换游戏模式">
+                <span id="modeIcon">👤</span>
+            </button>
+            
+            <!-- 单人模式：筹码选择 -->
+            <div class="header-chip-section single-mode-section">
+                <div class="chip-selector">
+                    <div class="chip" data-value="10">10</div>
+                    <div class="chip" data-value="30">30</div>
+                    <div class="chip selected" data-value="50">50</div>
+                    <div class="chip" data-value="100">100</div>
+                    <div class="chip" data-value="300">300</div>
+                    <div class="chip" data-value="500">500</div>
+                </div>
+                <div class="header-bet-info">
+                    <span>下注: <strong id="totalBetDisplay">0</strong></span>
+                    <button class="header-clear-btn" onclick="clearAllBets()">清除</button>
+                </div>
+            </div>
+            
+            <!-- 多人模式：玩家筹码区域 -->
+            <div class="multi-players-section" id="multiPlayersSection" style="display: none;">
+                <!-- 动态生成玩家筹码区域 -->
+            </div>
+
+            <!-- 单人模式：计分板 -->
+            <div class="score-section single-mode-section">
+                <div class="score-cards-container">
+                    <div class="score-card banker">
+                        <h2>庄</h2>
+                        <div class="score-display" id="bankerBalance">500</div>
+                        <div class="score-controls">
+                            <button class="score-btn minus" onclick="adjustBalance('banker', -100)">-100</button>
+                            <button class="score-btn plus" onclick="adjustBalance('banker', 100)">+100</button>
+                            <button class="score-btn reset" onclick="resetBalance('banker')">重置</button>
+                        </div>
+                    </div>
+                    <div class="score-card player">
+                        <h2>闲</h2>
+                        <div class="score-display" id="playerBalance">500</div>
+                        <div class="score-controls">
+                            <button class="score-btn minus" onclick="adjustBalance('player', -100)">-100</button>
+                            <button class="score-btn plus" onclick="adjustBalance('player', 100)">+100</button>
+                            <button class="score-btn reset" onclick="resetBalance('player')">重置</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 局数计数器和清除押注按钮容器 -->
+            <div class="round-and-clear-container">
+                <!-- 局数计数器 -->
+                <div class="round-counter">
+                    <span class="round-label">第</span>
+                    <span class="round-number" id="roundDisplay">0</span>
+                    <span class="round-label">局</span>
+                    <button class="round-reset-btn" onclick="resetRound()" title="重置局数">重置</button>
+                </div>
+                
+                <!-- 清除押注按钮 -->
+                <button class="clear-bets-btn single-mode-section" onclick="clearAllBets()" title="清除所有押注">
+                    <span class="btn-text">清除押注</span>
+                </button>
+                
+                <!-- 多人模式清除押注按钮 -->
+                <button class="clear-bets-btn multi-mode-section" onclick="clearAllBets()" title="清除所有押注" style="display: none;">
+                    <span class="btn-text">清除押注</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 左侧面板：现在更宽敞了 -->
+            <div class="left-panel">
+                <!-- 骰子输入 -->
+                <div class="dice-input-section">
+                    <h3>输入骰子点数</h3>
+                    <div class="dice-inputs">
+                        <div class="dice-input-group" id="group1">
+                            <label>骰1</label>
+                            <div class="dice-selector" id="dice1">
+                                <button class="dice-btn" data-value="1">⚀</button>
+                                <button class="dice-btn" data-value="2">⚁</button>
+                                <button class="dice-btn" data-value="3">⚂</button>
+                                <button class="dice-btn" data-value="4">⚃</button>
+                                <button class="dice-btn" data-value="5">⚄</button>
+                                <button class="dice-btn" data-value="6">⚅</button>
+                            </div>
+                        </div>
+                        <div class="dice-input-group" id="group2">
+                            <label>骰2</label>
+                            <div class="dice-selector" id="dice2">
+                                <button class="dice-btn" data-value="1">⚀</button>
+                                <button class="dice-btn" data-value="2">⚁</button>
+                                <button class="dice-btn" data-value="3">⚂</button>
+                                <button class="dice-btn" data-value="4">⚃</button>
+                                <button class="dice-btn" data-value="5">⚄</button>
+                                <button class="dice-btn" data-value="6">⚅</button>
+                            </div>
+                        </div>
+                        <div class="dice-input-group" id="group3">
+                            <label>骰3</label>
+                            <div class="dice-selector" id="dice3">
+                                <button class="dice-btn" data-value="1">⚀</button>
+                                <button class="dice-btn" data-value="2">⚁</button>
+                                <button class="dice-btn" data-value="3">⚂</button>
+                                <button class="dice-btn" data-value="4">⚃</button>
+                                <button class="dice-btn" data-value="5">⚄</button>
+                                <button class="dice-btn" data-value="6">⚅</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-preview">
+                        <div class="preview-dice" id="previewDice">
+                            <span class="preview-die">?</span>
+                            <span class="preview-die">?</span>
+                            <span class="preview-die">?</span>
+                        </div>
+                        <div class="preview-info">
+                            <span class="preview-total">总点数: <strong id="previewTotal">-</strong></span>
+                            <span class="preview-type" id="previewType">-</span>
+                        </div>
+                    </div>
+                    <button class="confirm-btn" id="confirmBtn" onclick="confirmResult()">确认开奖</button>
+                </div>
+            </div>
+
+            <!-- 押注区域 -->
+            <div class="betting-table">
+                <!-- 第一行：小 + 双围 + 大 -->
+                <div class="bet-section top-bets">
+                    <div class="bet-box big-small" data-bet="small" data-odds="1">
+                        <span class="bet-name">小</span>
+                        <span class="bet-range">4-10</span>
+                        <span class="bet-odds">1赔1</span>
+                    </div>
+                    <div class="bet-box pair pair-1" data-bet="pair-1" data-odds="8">
+                        <div class="pair-dice">1 1</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-2" data-bet="pair-2" data-odds="8">
+                        <div class="pair-dice">2 2</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-3" data-bet="pair-3" data-odds="8">
+                        <div class="pair-dice">3 3</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-4" data-bet="pair-4" data-odds="8">
+                        <div class="pair-dice">4 4</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-5" data-bet="pair-5" data-odds="8">
+                        <div class="pair-dice">5 5</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box pair pair-6" data-bet="pair-6" data-odds="8">
+                        <div class="pair-dice">6 6</div>
+                        <span class="bet-odds">1赔8</span>
+                    </div>
+                    <div class="bet-box big-small" data-bet="big" data-odds="1">
+                        <span class="bet-name">大</span>
+                        <span class="bet-range">11-17</span>
+                        <span class="bet-odds">1赔1</span>
+                    </div>
+                </div>
+
+                <!-- 双骰子组合 -->
+                <div class="bet-section">
+                    <div class="double-grid">
+                        <div class="bet-box double" data-bet="double-1-2" data-odds="5"><div class="double-dice">1 2</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-1-3" data-odds="5"><div class="double-dice">1 3</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-1-4" data-odds="5"><div class="double-dice">1 4</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-1-5" data-odds="5"><div class="double-dice">1 5</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-1-6" data-odds="5"><div class="double-dice">1 6</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-2-3" data-odds="5"><div class="double-dice">2 3</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-2-4" data-odds="5"><div class="double-dice">2 4</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-2-5" data-odds="5"><div class="double-dice">2 5</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-2-6" data-odds="5"><div class="double-dice">2 6</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-3-4" data-odds="5"><div class="double-dice">3 4</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-3-5" data-odds="5"><div class="double-dice">3 5</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-3-6" data-odds="5"><div class="double-dice">3 6</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-4-5" data-odds="5"><div class="double-dice">4 5</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-4-6" data-odds="5"><div class="double-dice">4 6</div><span class="bet-odds">1赔5</span></div>
+                        <div class="bet-box double" data-bet="double-5-6" data-odds="5"><div class="double-dice">5 6</div><span class="bet-odds">1赔5</span></div>
+                    </div>
+                </div>
+
+                <!-- 第二行：点数4-17 -->
+                <div class="bet-section">
+                    <div class="total-grid">
+                        <div class="bet-box total" data-bet="total-4" data-odds="60"><span class="bet-number">4</span><span class="bet-odds">1赔60</span></div>
+                        <div class="bet-box total" data-bet="total-5" data-odds="30"><span class="bet-number">5</span><span class="bet-odds">1赔30</span></div>
+                        <div class="bet-box total" data-bet="total-6" data-odds="18"><span class="bet-number">6</span><span class="bet-odds">1赔18</span></div>
+                        <div class="bet-box total" data-bet="total-7" data-odds="12"><span class="bet-number">7</span><span class="bet-odds">1赔12</span></div>
+                        <div class="bet-box total" data-bet="total-8" data-odds="8"><span class="bet-number">8</span><span class="bet-odds">1赔8</span></div>
+                        <div class="bet-box total" data-bet="total-9" data-odds="6"><span class="bet-number">9</span><span class="bet-odds">1赔6</span></div>
+                        <div class="bet-box total" data-bet="total-10" data-odds="6"><span class="bet-number">10</span><span class="bet-odds">1赔6</span></div>
+                        <div class="bet-box total" data-bet="total-11" data-odds="6"><span class="bet-number">11</span><span class="bet-odds">1赔6</span></div>
+                        <div class="bet-box total" data-bet="total-12" data-odds="6"><span class="bet-number">12</span><span class="bet-odds">1赔6</span></div>
+                        <div class="bet-box total" data-bet="total-13" data-odds="8"><span class="bet-number">13</span><span class="bet-odds">1赔8</span></div>
+                        <div class="bet-box total" data-bet="total-14" data-odds="12"><span class="bet-number">14</span><span class="bet-odds">1赔12</span></div>
+                        <div class="bet-box total" data-bet="total-15" data-odds="18"><span class="bet-number">15</span><span class="bet-odds">1赔18</span></div>
+                        <div class="bet-box total" data-bet="total-16" data-odds="30"><span class="bet-number">16</span><span class="bet-odds">1赔30</span></div>
+                        <div class="bet-box total" data-bet="total-17" data-odds="60"><span class="bet-number">17</span><span class="bet-odds">1赔60</span></div>
+                    </div>
+                </div>
+
+                <!-- 第三行：围骰 -->
+                <div class="bet-section">
+                    <div class="triple-grid">
+                        <div class="bet-box triple" data-bet="triple-1" data-odds="150"><div class="triple-dice">1 1 1</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple" data-bet="triple-2" data-odds="150"><div class="triple-dice">2 2 2</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple" data-bet="triple-3" data-odds="150"><div class="triple-dice">3 3 3</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple any-triple" data-bet="any-triple" data-odds="24"><span class="bet-name" style="font-size:0.8rem">全围</span><span class="bet-odds">1赔24</span></div>
+                        <div class="bet-box triple" data-bet="triple-4" data-odds="150"><div class="triple-dice">4 4 4</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple" data-bet="triple-5" data-odds="150"><div class="triple-dice">5 5 5</div><span class="bet-odds">1赔150</span></div>
+                        <div class="bet-box triple" data-bet="triple-6" data-odds="150"><div class="triple-dice">6 6 6</div><span class="bet-odds">1赔150</span></div>
+                    </div>
+                </div>
+
+                <!-- 第四行：单骰 -->
+                <div class="bet-section">
+                    <div class="single-grid">
+                        <div class="bet-box single" data-bet="single-1" data-odds="1">
+                            <div class="dice" data-value="1"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-2" data-odds="1">
+                            <div class="dice" data-value="2"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-3" data-odds="1">
+                            <div class="dice" data-value="3"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-4" data-odds="1">
+                            <div class="dice" data-value="4"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-5" data-odds="1">
+                            <div class="dice" data-value="5"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                        <div class="bet-box single" data-bet="single-6" data-odds="1">
+                            <div class="dice" data-value="6"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                            <span class="bet-odds">1赔1</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="history-panel">
+            <div class="history-header">
+                <h3>历史</h3>
+                <button class="clear-history-btn" onclick="clearHistory()">清空</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-history">暂无记录</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 多人模式选择模态框 -->
+    <div class="mode-modal" id="modeModal">
+        <div class="mode-modal-content">
+            <h2>👥 多人模式</h2>
+            <p class="mode-description">选择参与游戏的闲家数量</p>
+            
+            <div class="player-count-options">
+                <button class="player-count-btn" onclick="setPlayerCount(2)">2人</button>
+                <button class="player-count-btn" onclick="setPlayerCount(3)">3人</button>
+                <button class="player-count-btn" onclick="setPlayerCount(4)">4人</button>
+                <button class="player-count-btn" onclick="setPlayerCount(5)">5人</button>
+                <button class="player-count-btn" onclick="setPlayerCount(6)">6人</button>
+            </div>
+            
+            <div class="mode-modal-actions">
+                <button class="mode-cancel-btn" onclick="closeModeModal()">取消</button>
+                <button class="mode-confirm-btn" onclick="confirmModeChange()">开始游戏</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <script>// 生成骰子HTML的辅助函数
+function createDiceHTML(value) {
+    return `<div class="dice" data-value="${value}">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>`;
+}
+
+// 页面加载后替换所有骰子显示
+document.addEventListener('DOMContentLoaded', () => {
+    // 替换输入区域的骰子按钮
+    document.querySelectorAll('.dice-btn').forEach(btn => {
+        const value = btn.dataset.value;
+        btn.innerHTML = createDiceHTML(value);
+    });
+    
+    // 替换双围
+    document.querySelectorAll('.pair-dice').forEach(el => {
+        const text = el.textContent.trim();
+        const numbers = text.split(' ').filter(n => n);
+        if (numbers.length === 2) {
+            el.innerHTML = numbers.map(n => createDiceHTML(n)).join('');
+        }
+    });
+    
+    // 替换双骰组合
+    document.querySelectorAll('.double-dice').forEach(el => {
+        const text = el.textContent.trim();
+        const numbers = text.split(' ').filter(n => n);
+        if (numbers.length === 2) {
+            el.innerHTML = numbers.map(n => createDiceHTML(n)).join('');
+        }
+    });
+    
+    // 替换三同骰
+    document.querySelectorAll('.triple-dice').forEach(el => {
+        const text = el.textContent.trim();
+        const numbers = text.split(' ').filter(n => n);
+        if (numbers.length === 3) {
+            el.innerHTML = numbers.map(n => createDiceHTML(n)).join('');
+        }
+    });
+});
+
+
+
+// 骰宝记分板
+const diceSymbols = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+// 玩家颜色配置
+const PLAYER_COLORS = [
+    { id: 1, name: '闲家1', color: '#f44336', chipColor: '#e53935', lightColor: '#ef5350' },  // 红色
+    { id: 2, name: '闲家2', color: '#2196F3', chipColor: '#1976D2', lightColor: '#42A5F5' },  // 蓝色
+    { id: 3, name: '闲家3', color: '#4CAF50', chipColor: '#388E3C', lightColor: '#66BB6A' },  // 绿色
+    { id: 4, name: '闲家4', color: '#FFC107', chipColor: '#FFA000', lightColor: '#FFCA28' },  // 黄色
+    { id: 5, name: '闲家5', color: '#9C27B0', chipColor: '#7B1FA2', lightColor: '#AB47BC' },  // 紫色
+    { id: 6, name: '闲家6', color: '#FF5722', chipColor: '#E64A19', lightColor: '#FF7043' }   // 橙色
+];
+
+// 游戏状态
+let state = {
+    gameMode: 'single',  // 'single' 或 'multi'
+    playerCount: 1,      // 单人模式=1，多人模式=2-6
+    bankerBalance: 500,  // 庄家筹码余额
+    
+    // 单人模式数据
+    playerBalance: 500,  // 闲家筹码余额
+    
+    // 多人模式数据
+    players: [],         // 多个玩家的数据 [{ id, name, balance, color, currentChip }]
+    currentPlayerId: null, // 当前选中的玩家ID
+    
+    selectedDice: [null, null, null],
+    history: [],
+    bets: {},        // 单人: { "big": [50, 100], "small": [10] }
+                     // 多人: { "big": [{playerId: 1, amount: 50}, {playerId: 2, amount: 100}] }
+    currentChip: 50,
+    round: 0         // 当前局数
+};
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+    loadState();
+    
+    // 检查并修正旧的余额数据
+    if (state.bankerBalance === 10000 || state.playerBalance === 10000 || 
+        state.bankerBalance === 5000 || state.playerBalance === 5000) {
+        state.bankerBalance = 500;
+        state.playerBalance = 500;
+        saveState();
+    }
+    
+    initDiceSelectors();
+    initChipSelector();
+    initBetBoxes();
+    initGameMode();  // 初始化游戏模式
+    updateDisplay();
+    syncChipSelection(); // 同步筹码选择状态
+    updatePreview(); // 更新预览和按钮状态
+});
+
+// 初始化骰子选择器
+function initDiceSelectors() {
+    for (let i = 1; i <= 3; i++) {
+        const selector = document.getElementById(`dice${i}`);
+        const group = document.getElementById(`group${i}`);
+        const buttons = selector.querySelectorAll('.dice-btn');
+        
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                buttons.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                state.selectedDice[i - 1] = parseInt(btn.dataset.value);
+                
+                // 给分组添加选中状态
+                if (group) group.classList.add('has-selection');
+                
+                updatePreview();
+                updateConfirmButtonState();
+            });
+        });
+    }
+}
+
+// 初始化筹码选择器
+function initChipSelector() {
+    document.querySelectorAll('.chip-selector .chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.chip-selector .chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+            state.currentChip = parseInt(chip.dataset.value);
+            saveState(); // 保存选中的筹码
+        });
+    });
+}
+
+// 同步筹码选择状态
+function syncChipSelection() {
+    // 移除所有选中状态
+    document.querySelectorAll('.chip-selector .chip').forEach(c => c.classList.remove('selected'));
+    
+    // 根据 state.currentChip 设置选中状态
+    const selectedChip = document.querySelector(`.chip-selector .chip[data-value="${state.currentChip}"]`);
+    if (selectedChip) {
+        selectedChip.classList.add('selected');
+    } else {
+        // 如果找不到对应的筹码，默认选中10
+        state.currentChip = 10;
+        const defaultChip = document.querySelector('.chip-selector .chip[data-value="10"]');
+        if (defaultChip) {
+            defaultChip.classList.add('selected');
+        }
+    }
+}
+
+// 初始化押注区域
+function initBetBoxes() {
+    document.querySelectorAll('.bet-box').forEach(box => {
+        const betType = box.dataset.bet;
+        let pressTimer = null;
+        let isLongPress = false;
+        
+        // 触摸/鼠标按下开始
+        const startPress = (e) => {
+            isLongPress = false;
+            pressTimer = setTimeout(() => {
+                isLongPress = true;
+                // 长按：清除该区域所有筹码
+                clearBet(betType);
+                // 震动反馈（如果支持）
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                // 视觉反馈
+                box.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    box.style.transform = '';
+                }, 100);
+            }, 500); // 500ms 判定为长按
+        };
+        
+        // 触摸/鼠标抬起
+        const endPress = (e) => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+            }
+            if (!isLongPress) {
+                // 短按：添加筹码
+                e.preventDefault();
+                
+                // 获取当前使用的筹码值
+                let chipValue;
+                if (state.gameMode === 'multi') {
+                    // 多人模式：使用当前玩家的筹码
+                    const currentPlayer = state.players.find(p => p.id === state.currentPlayerId);
+                    chipValue = currentPlayer ? currentPlayer.currentChip : 50;
+                } else {
+                    // 单人模式：使用全局筹码
+                    chipValue = state.currentChip;
+                }
+                
+                placeBet(betType, chipValue);
+            }
+            isLongPress = false;
+        };
+        
+        // 触摸/鼠标移出
+        const cancelPress = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+            }
+            isLongPress = false;
+        };
+        
+        // 移动端事件
+        box.addEventListener('touchstart', startPress, { passive: true });
+        box.addEventListener('touchend', endPress);
+        box.addEventListener('touchcancel', cancelPress);
+        
+        // PC端事件
+        box.addEventListener('mousedown', startPress);
+        box.addEventListener('mouseup', endPress);
+        box.addEventListener('mouseleave', cancelPress);
+        
+        // 禁用右键菜单
+        box.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+    });
+}
+
+// 下注
+function placeBet(betType, amount) {
+    if (!state.bets[betType]) {
+        state.bets[betType] = [];
+    }
+    
+    if (amount > 0) {
+        if (state.gameMode === 'single') {
+            // 单人模式逻辑
+            if (state.playerBalance < amount) {
+                alert('闲家余额不足！');
+                return;
+            }
+            
+            state.bets[betType].push(amount);
+            state.playerBalance -= amount;
+        } else {
+            // 多人模式逻辑
+            const currentPlayer = state.players.find(p => p.id === state.currentPlayerId);
+            if (!currentPlayer) {
+                alert('请先选择一个玩家！');
+                return;
+            }
+            
+            if (currentPlayer.balance < amount) {
+                alert(`${currentPlayer.name}余额不足！`);
+                return;
+            }
+            
+            // 记录玩家ID和金额
+            state.bets[betType].push({
+                playerId: currentPlayer.id,
+                amount: amount,
+                color: currentPlayer.color,
+                chipColor: currentPlayer.chipColor
+            });
+            
+            // 扣除该玩家积分
+            currentPlayer.balance -= amount;
+            document.getElementById(`player${currentPlayer.id}Balance`).textContent = currentPlayer.balance;
+        }
+    } else {
+        // 移除最后一个筹码并退还积分
+        if (state.gameMode === 'single') {
+            const removedChip = state.bets[betType].pop();
+            if (removedChip) {
+                state.playerBalance += removedChip;
+            }
+        } else {
+            const removedChip = state.bets[betType].pop();
+            if (removedChip) {
+                const player = state.players.find(p => p.id === removedChip.playerId);
+                if (player) {
+                    player.balance += removedChip.amount;
+                    document.getElementById(`player${player.id}Balance`).textContent = player.balance;
+                }
+            }
+        }
+    }
+    
+    // 清理空数组
+    if (state.bets[betType].length === 0) {
+        delete state.bets[betType];
+    }
+    
+    updateBetDisplay();
+    updateDisplay();  // 更新余额显示
+    saveState();
+}
+
+// 清除单个区域的筹码
+function clearBet(betType) {
+    if (state.bets[betType]) {
+        if (state.gameMode === 'single') {
+            // 单人模式：退还所有筹码的积分
+            const totalBet = state.bets[betType].reduce((sum, chip) => sum + chip, 0);
+            state.playerBalance += totalBet;
+        } else {
+            // 多人模式：退还每个玩家的筹码
+            state.bets[betType].forEach(chipData => {
+                const player = state.players.find(p => p.id === chipData.playerId);
+                if (player) {
+                    player.balance += chipData.amount;
+                    document.getElementById(`player${player.id}Balance`).textContent = player.balance;
+                }
+            });
+        }
+        
+        delete state.bets[betType];
+        updateBetDisplay();
+        updateDisplay();  // 更新余额显示
+        saveState();
+    }
+}
+
+// 清除所有下注
+function clearAllBets() {
+    // 二次确认
+    if (!confirm('确定要清除所有押注吗？押注的筹码将会退还。')) {
+        return; // 用户取消，不执行清除操作
+    }
+    
+    if (state.gameMode === 'single') {
+        // 单人模式：退还所有筹码的积分
+        let totalBet = 0;
+        Object.keys(state.bets).forEach(betType => {
+            const betAmount = state.bets[betType].reduce((sum, chip) => sum + chip, 0);
+            totalBet += betAmount;
+        });
+        state.playerBalance += totalBet;
+    } else {
+        // 多人模式：退还每个玩家的筹码
+        Object.keys(state.bets).forEach(betType => {
+            state.bets[betType].forEach(chipData => {
+                const player = state.players.find(p => p.id === chipData.playerId);
+                if (player) {
+                    player.balance += chipData.amount;
+                    document.getElementById(`player${player.id}Balance`).textContent = player.balance;
+                }
+            });
+        });
+    }
+    
+    state.bets = {};
+    updateBetDisplay();
+    updateDisplay();  // 更新余额显示
+    saveState();
+}
+
+// 格式化筹码金额显示
+function formatChipAmount(amount) {
+    if (amount >= 1000) {
+        return (amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1) + 'K';
+    }
+    return amount;
+}
+
+// 更新下注显示
+function updateBetDisplay() {
+    // 更新每个押注区域的筹码显示
+    document.querySelectorAll('.bet-box').forEach(box => {
+        const betType = box.dataset.bet;
+        const chips = state.bets[betType] || [];
+        let chipStack = box.querySelector('.chip-stack');
+        
+        // 如果没有筹码容器，创建一个
+        if (!chipStack) {
+            chipStack = document.createElement('div');
+            chipStack.className = 'chip-stack';
+            box.appendChild(chipStack);
+        }
+        
+        // 清空现有筹码
+        chipStack.innerHTML = '';
+        
+        if (chips.length > 0) {
+            box.classList.add('has-bet');
+            
+            // 最多显示5个筹码，多余的堆叠
+            const displayChips = chips.slice(-5);
+            
+            if (state.gameMode === 'single') {
+                // 单人模式：显示筹码面值
+                displayChips.forEach(chipValue => {
+                    const chip = document.createElement('div');
+                    chip.className = `chip-item chip-${chipValue}`;
+                    chip.textContent = chipValue >= 1000 ? '1K' : chipValue;
+                    chipStack.appendChild(chip);
+                });
+                
+                // 显示总金额
+                const total = chips.reduce((sum, val) => sum + val, 0);
+                const totalDiv = document.createElement('div');
+                totalDiv.className = 'chip-total';
+                totalDiv.textContent = formatChipAmount(total);
+                chipStack.appendChild(totalDiv);
+            } else {
+                // 多人模式：按玩家分组显示
+                const playerGroups = {};
+                chips.forEach(chipData => {
+                    if (!playerGroups[chipData.playerId]) {
+                        playerGroups[chipData.playerId] = {
+                            chips: [],
+                            total: 0,
+                            color: chipData.color,
+                            chipColor: chipData.chipColor
+                        };
+                    }
+                    playerGroups[chipData.playerId].chips.push(chipData.amount);
+                    playerGroups[chipData.playerId].total += chipData.amount;
+                });
+                
+                // 为每个玩家显示筹码（最多显示3个筹码）
+                Object.values(playerGroups).forEach(group => {
+                    const displayPlayerChips = group.chips.slice(-3); // 每个玩家最多显示3个筹码
+                    
+                    displayPlayerChips.forEach(amount => {
+                        const chip = document.createElement('div');
+                        chip.className = 'chip-item';
+                        chip.textContent = amount >= 1000 ? '1K' : amount;
+                        chip.style.background = `radial-gradient(circle, ${group.color}, ${group.chipColor})`;
+                        chipStack.appendChild(chip);
+                    });
+                    
+                    // 显示该玩家的总额
+                    const totalDiv = document.createElement('div');
+                    totalDiv.className = 'chip-total';
+                    totalDiv.textContent = formatChipAmount(group.total);
+                    totalDiv.style.background = '#000';
+                    totalDiv.style.borderColor = group.color;
+                    totalDiv.style.color = group.color;
+                    chipStack.appendChild(totalDiv);
+                });
+            }
+        } else {
+            box.classList.remove('has-bet');
+        }
+    });
+    
+    // 更新总下注金额
+    let totalBet = 0;
+    Object.values(state.bets).forEach(chips => {
+        if (Array.isArray(chips)) {
+            totalBet += chips.reduce((sum, val) => sum + val, 0);
+        }
+    });
+    document.getElementById('totalBetDisplay').textContent = totalBet;
+}
+
+// 更新预览
+function updatePreview() {
+    const previewDice = document.getElementById('previewDice');
+    const previewTotal = document.getElementById('previewTotal');
+    const previewType = document.getElementById('previewType');
+    
+    const dice = state.selectedDice;
+    
+    const dieElements = previewDice.querySelectorAll('.preview-die');
+    dice.forEach((value, index) => {
+        dieElements[index].textContent = value !== null ? diceSymbols[value - 1] : '?';
+    });
+    
+    const confirmBtn = document.getElementById('confirmBtn');
+    
+    if (dice.every(d => d !== null)) {
+        const total = dice.reduce((a, b) => a + b, 0);
+        const isTriple = dice[0] === dice[1] && dice[1] === dice[2];
+        
+        previewTotal.textContent = total;
+        
+        let typeText = isTriple ? '围骰! ' : '';
+        typeText += total >= 11 ? '大' : '小';
+        typeText += ' / ';
+        typeText += total % 2 === 1 ? '单' : '双';
+        
+        previewType.textContent = typeText;
+        
+        // 启用按钮
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.classList.remove('disabled');
+        }
+    } else {
+        previewTotal.textContent = '-';
+        previewType.textContent = '-';
+        
+        // 禁用按钮并添加置灰样式
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.classList.add('disabled');
+        }
+    }
+}
+
+// 确认开奖结果
+function confirmResult() {
+    const dice = state.selectedDice;
+    
+    if (!dice.every(d => d !== null)) {
+        alert('请先选择三个骰子的点数！');
+        return;
+    }
+    
+    const total = dice.reduce((a, b) => a + b, 0);
+    const isTriple = dice[0] === dice[1] && dice[1] === dice[2];
+    
+    // 增加局数
+    state.round++;
+    
+    // 计算输赢并更新积分
+    calculateWinnings(dice, total, isTriple);
+    
+    // 添加历史记录
+    state.history.unshift({
+        dice: [...dice],
+        total: total,
+        isTriple: isTriple,
+        time: new Date().toLocaleTimeString()
+    });
+    
+    if (state.history.length > 20) {
+        state.history.pop();
+    }
+    
+    // 高亮中奖区域
+    highlightWinningBets(dice, total, isTriple);
+    
+    // 重置骰子选择
+    resetDiceSelection();
+    
+    // 立即更新显示（但不清除筹码，筹码清除由calculateWinnings在10秒后处理）
+    updateDisplay();
+    saveState();
+}
+
+// 高亮中奖区域
+function highlightWinningBets(dice, total, isTriple) {
+    document.querySelectorAll('.bet-box').forEach(box => {
+        box.classList.remove('winning');
+    });
+    
+    const winningBets = [];
+    
+    if (!isTriple) {
+        if (total >= 11 && total <= 17) winningBets.push('big');
+        else if (total >= 4 && total <= 10) winningBets.push('small');
+        
+        if (total % 2 === 1) winningBets.push('odd');
+        else winningBets.push('even');
+    }
+    
+    winningBets.push(`total-${total}`);
+    
+    if (isTriple) {
+        winningBets.push(`triple-${dice[0]}`);
+        winningBets.push('any-triple');
+    }
+    
+    // 单骰中奖
+    const diceCount = {};
+    dice.forEach(d => {
+        diceCount[d] = (diceCount[d] || 0) + 1;
+    });
+    Object.keys(diceCount).forEach(d => {
+        winningBets.push(`single-${d}`);
+    });
+    
+    // 双骰组合中奖
+    const sortedDice = [...dice].sort((a, b) => a - b);
+    for (let i = 0; i < sortedDice.length; i++) {
+        for (let j = i + 1; j < sortedDice.length; j++) {
+            if (sortedDice[i] !== sortedDice[j]) {
+                winningBets.push(`double-${sortedDice[i]}-${sortedDice[j]}`);
+            }
+        }
+    }
+    
+    // 双围中奖（三个骰子中至少有两个相同）
+    Object.keys(diceCount).forEach(d => {
+        if (diceCount[d] >= 2) {
+            winningBets.push(`pair-${d}`);
+        }
+    });
+    
+    winningBets.forEach(bet => {
+        const box = document.querySelector(`[data-bet="${bet}"]`);
+        if (box) box.classList.add('winning');
+    });
+    
+    setTimeout(() => {
+        document.querySelectorAll('.bet-box').forEach(box => {
+            box.classList.remove('winning');
+        });
+    }, 10000); // 10秒闪烁时长
+}
+
+// 计算输赢并更新余额
+function calculateWinnings(dice, total, isTriple) {
+    if (state.gameMode === 'single') {
+        calculateSingleModeWinnings(dice, total, isTriple);
+    } else {
+        calculateMultiModeWinnings(dice, total, isTriple);
+    }
+}
+
+// 单人模式结算
+function calculateSingleModeWinnings(dice, total, isTriple) {
+    let bankerWinnings = 0;  // 庄家输赢（正为赢，负为输）
+    let playerWinnings = 0;  // 闲家输赢（正为赢，负为输）
+    
+    // 遍历所有押注
+    Object.keys(state.bets).forEach(betKey => {
+        const betChips = state.bets[betKey];
+        if (!betChips || betChips.length === 0) return;
+        
+        // 计算总押注金额
+        const totalBet = betChips.reduce((sum, chip) => sum + chip, 0);
+        
+        // 获取赔率
+        const betBox = document.querySelector(`[data-bet="${betKey}"]`);
+        if (!betBox) return;
+        
+        const odds = parseFloat(betBox.dataset.odds) || 1;
+        
+        // 判断是否中奖
+        let isWinning = false;
+        
+        // 大小判断
+        if (betKey === 'big' && !isTriple && total >= 11 && total <= 17) isWinning = true;
+        if (betKey === 'small' && !isTriple && total >= 4 && total <= 10) isWinning = true;
+        
+        // 点数判断
+        if (betKey.startsWith('total-')) {
+            const targetTotal = parseInt(betKey.split('-')[1]);
+            if (total === targetTotal) isWinning = true;
+        }
+        
+        // 三围判断
+        if (betKey.startsWith('triple-')) {
+            const targetNum = parseInt(betKey.split('-')[1]);
+            if (isTriple && dice[0] === targetNum) isWinning = true;
+        }
+        
+        // 全围判断
+        if (betKey === 'any-triple' && isTriple) isWinning = true;
+        
+        // 单骰判断
+        if (betKey.startsWith('single-')) {
+            const targetNum = parseInt(betKey.split('-')[1]);
+            const count = dice.filter(d => d === targetNum).length;
+            if (count > 0) {
+                isWinning = true;
+                // 单骰特殊：出现1次赔1倍，但这里统一处理为赔率1
+            }
+        }
+        
+        // 双骰组合判断
+        if (betKey.startsWith('double-')) {
+            const [_, num1, num2] = betKey.split('-').map(Number);
+            const sortedDice = [...dice].sort((a, b) => a - b);
+            for (let i = 0; i < sortedDice.length; i++) {
+                for (let j = i + 1; j < sortedDice.length; j++) {
+                    if ((sortedDice[i] === num1 && sortedDice[j] === num2) ||
+                        (sortedDice[i] === num2 && sortedDice[j] === num1)) {
+                        isWinning = true;
+                        break;
+                    }
+                }
+                if (isWinning) break;
+            }
+        }
+        
+        // 双围判断
+        if (betKey.startsWith('pair-')) {
+            const targetNum = parseInt(betKey.split('-')[1]);
+            const count = dice.filter(d => d === targetNum).length;
+            if (count >= 2) isWinning = true;
+        }
+        
+        // 计算输赢（押注时已经扣除了闲家积分）
+        if (isWinning) {
+            // 中奖：闲家赢得 押注金额 + 押注金额 × 赔率
+            playerWinnings += totalBet + (totalBet * odds);
+            bankerWinnings -= totalBet * odds;
+        } else {
+            // 未中奖：庄家赢得押注金额（闲家已经扣除，不需要再扣）
+            bankerWinnings += totalBet;
+        }
+    });
+    
+    // 延迟更新余额，等待押注区闪烁结束（10秒后）
+    setTimeout(() => {
+        // 更新余额
+        state.bankerBalance += bankerWinnings;
+        state.playerBalance += playerWinnings;
+        
+        // 确保余额不为负数
+        state.bankerBalance = Math.max(0, state.bankerBalance);
+        state.playerBalance = Math.max(0, state.playerBalance);
+        
+        // 先更新显示
+        updateDisplay();
+        saveState();
+        
+        // 触发闪烁效果（如果有积分增加）
+        if (bankerWinnings > 0) {
+            const bankerDisplay = document.getElementById('bankerBalance');
+            if (bankerDisplay) {
+                bankerDisplay.classList.add('flash-increase');
+                setTimeout(() => {
+                    bankerDisplay.classList.remove('flash-increase');
+                }, 800);
+            }
+        }
+        
+        if (playerWinnings > 0) {
+            const playerDisplay = document.getElementById('playerBalance');
+            if (playerDisplay) {
+                playerDisplay.classList.add('flash-increase');
+                setTimeout(() => {
+                    playerDisplay.classList.remove('flash-increase');
+                }, 800);
+            }
+        }
+        
+        // 清除押注数据和界面显示
+        state.bets = {};
+        document.querySelectorAll('.chip-stack').forEach(stack => {
+            stack.innerHTML = '';
+        });
+        document.querySelectorAll('.bet-box').forEach(box => {
+            box.classList.remove('has-bet');
+        });
+        
+        // 检查游戏是否结束
+        checkGameOver();
+    }, 10000); // 等待10秒后再加积分
+}
+
+// 多人模式结算
+function calculateMultiModeWinnings(dice, total, isTriple) {
+    let bankerWinnings = 0;
+    const playerWinnings = {}; // { playerId: winAmount }
+    
+    // 初始化每个玩家的输赢
+    state.players.forEach(player => {
+        playerWinnings[player.id] = 0;
+    });
+    
+    // 遍历所有押注
+    Object.keys(state.bets).forEach(betKey => {
+        const betChips = state.bets[betKey];
+        if (!betChips || betChips.length === 0) return;
+        
+        // 获取赔率
+        const betBox = document.querySelector(`[data-bet="${betKey}"]`);
+        if (!betBox) return;
+        const odds = parseFloat(betBox.dataset.odds) || 1;
+        
+        // 判断是否中奖
+        const isWinning = checkWinning(betKey, dice, total, isTriple);
+        
+        // 遍历每个筹码
+        betChips.forEach(chipData => {
+            const betAmount = chipData.amount;
+            
+            if (isWinning) {
+                // 中奖：玩家赢得 本金 + 奖金
+                playerWinnings[chipData.playerId] += betAmount + (betAmount * odds);
+                bankerWinnings -= betAmount * odds;
+            } else {
+                // 未中奖：庄家赢得押注金额
+                bankerWinnings += betAmount;
+            }
+        });
+    });
+    
+    // 延迟更新余额，等待押注区闪烁结束（10秒后）
+    setTimeout(() => {
+        // 更新庄家余额并触发动画
+        if (bankerWinnings !== 0) {
+            state.bankerBalance += bankerWinnings;
+            const bankerBalanceDisplay = document.getElementById('bankerBalance');
+            if (bankerBalanceDisplay) {
+                bankerBalanceDisplay.textContent = state.bankerBalance;
+                
+                // 触发闪烁效果（不管增加还是减少）
+                bankerBalanceDisplay.classList.add('flash-increase');
+                setTimeout(() => {
+                    bankerBalanceDisplay.classList.remove('flash-increase');
+                }, 800);
+            }
+        }
+        
+        // 更新每个玩家的余额
+        state.players.forEach(player => {
+            const winAmount = playerWinnings[player.id];
+            if (winAmount !== 0) {
+                player.balance += winAmount;
+                
+                const balanceDisplay = document.getElementById(`player${player.id}Balance`);
+                if (balanceDisplay) {
+                    balanceDisplay.textContent = player.balance;
+                    
+                    // 触发闪烁效果（不管增加还是减少）
+                    balanceDisplay.classList.add('flash-increase');
+                    setTimeout(() => {
+                        balanceDisplay.classList.remove('flash-increase');
+                    }, 800);
+                }
+            }
+        });
+        
+        // 庄家余额闪烁
+        if (bankerWinnings > 0) {
+            const bankerDisplay = document.getElementById('bankerBalance');
+            if (bankerDisplay) {
+                bankerDisplay.textContent = state.bankerBalance;
+                bankerDisplay.classList.add('flash-increase');
+                setTimeout(() => {
+                    bankerDisplay.classList.remove('flash-increase');
+                }, 800);
+            }
+        } else {
+            document.getElementById('bankerBalance').textContent = state.bankerBalance;
+        }
+        
+        // 清除押注数据和界面显示
+        state.bets = {};
+        document.querySelectorAll('.chip-stack').forEach(stack => {
+            stack.innerHTML = '';
+        });
+        document.querySelectorAll('.bet-box').forEach(box => {
+            box.classList.remove('has-bet');
+        });
+        
+        updateDisplay();
+        saveState();
+        
+        // 检查游戏是否结束
+        checkGameOver();
+    }, 10000); // 等待10秒后再加积分
+}
+
+// 判断是否中奖（提取公共逻辑）
+function checkWinning(betKey, dice, total, isTriple) {
+    // 大小判断
+    if (betKey === 'big' && !isTriple && total >= 11 && total <= 17) return true;
+    if (betKey === 'small' && !isTriple && total >= 4 && total <= 10) return true;
+    
+    // 点数判断
+    if (betKey.startsWith('total-')) {
+        const targetTotal = parseInt(betKey.split('-')[1]);
+        if (total === targetTotal) return true;
+    }
+    
+    // 三围判断
+    if (betKey.startsWith('triple-')) {
+        const targetNum = parseInt(betKey.split('-')[1]);
+        if (isTriple && dice[0] === targetNum) return true;
+    }
+    
+    // 全围判断
+    if (betKey === 'any-triple' && isTriple) return true;
+    
+    // 单骰判断
+    if (betKey.startsWith('single-')) {
+        const targetNum = parseInt(betKey.split('-')[1]);
+        const count = dice.filter(d => d === targetNum).length;
+        if (count > 0) return true;
+    }
+    
+    // 双骰组合判断
+    if (betKey.startsWith('double-')) {
+        const [_, num1, num2] = betKey.split('-').map(Number);
+        const sortedDice = [...dice].sort((a, b) => a - b);
+        for (let i = 0; i < sortedDice.length; i++) {
+            for (let j = i + 1; j < sortedDice.length; j++) {
+                if ((sortedDice[i] === num1 && sortedDice[j] === num2) ||
+                    (sortedDice[i] === num2 && sortedDice[j] === num1)) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    // 双围判断
+    if (betKey.startsWith('pair-')) {
+        const targetNum = parseInt(betKey.split('-')[1]);
+        const count = dice.filter(d => d === targetNum).length;
+        if (count >= 2) return true;
+    }
+    
+    return false;
+}
+
+// 重置骰子选择
+function resetDiceSelection() {
+    state.selectedDice = [null, null, null];
+    document.querySelectorAll('.dice-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    document.querySelectorAll('.dice-input-group').forEach(group => {
+        group.classList.remove('has-selection');
+    });
+    updatePreview();
+    updateConfirmButtonState();
+}
+
+// 调整余额
+function adjustBalance(type, amount) {
+    if (type === 'banker') {
+        state.bankerBalance = Math.max(0, state.bankerBalance + amount);
+    } else {
+        state.playerBalance = Math.max(0, state.playerBalance + amount);
+    }
+    updateDisplay();
+    
+    // 如果是增加积分，触发闪烁效果
+    if (amount > 0) {
+        const displayElement = type === 'banker' 
+            ? document.getElementById('bankerBalance')
+            : document.getElementById('playerBalance');
+        
+        if (displayElement) {
+            displayElement.classList.add('flash-increase');
+            setTimeout(() => {
+                displayElement.classList.remove('flash-increase');
+            }, 800);
+        }
+    }
+    
+    saveState();
+    checkGameOver();
+}
+
+// 检查游戏是否结束
+function checkGameOver() {
+    if (state.bankerBalance <= 0) {
+        showGameOver('闲家');
+    } else if (state.playerBalance <= 0) {
+        showGameOver('庄家');
+    }
+}
+
+// 显示游戏结束动画
+function showGameOver(winner) {
+    // 创建遮罩层
+    const overlay = document.createElement('div');
+    overlay.className = 'game-over-overlay';
+    
+    // 创建内容
+    const content = document.createElement('div');
+    content.className = 'game-over-content';
+    
+    content.innerHTML = `
+        <div class="winner-text">${winner} 获胜！</div>
+        <div class="winner-subtitle">🎉 恭喜 ${winner} 赢得游戏 🎉</div>
+        <button class="restart-btn" onclick="restartGame()">重新开始</button>
+    `;
+    
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+    
+    // 创建烟花效果
+    createFireworks(content);
+}
+
+// 创建烟花效果
+function createFireworks(container) {
+    const overlay = container.closest('.game-over-overlay');
+    
+    // 创建多波烟花
+    for (let wave = 0; wave < 5; wave++) {
+        setTimeout(() => {
+            // 每波创建多个烟花
+            for (let i = 0; i < 80; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    firework.className = 'firework';
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 150 + Math.random() * 300;
+                    const x = Math.cos(angle) * distance;
+                    const y = Math.sin(angle) * distance;
+                    
+                    firework.style.setProperty('--x', `${x}px`);
+                    firework.style.setProperty('--y', `${y}px`);
+                    
+                    // 随机位置爆发
+                    const startX = 20 + Math.random() * 60;
+                    const startY = 20 + Math.random() * 60;
+                    firework.style.left = `${startX}%`;
+                    firework.style.top = `${startY}%`;
+                    
+                    const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#f38181', '#95e1d3', '#f3a683', '#f8b500', '#ff3838', '#70a1ff'];
+                    firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    // 随机大小
+                    const size = 4 + Math.random() * 6;
+                    firework.style.width = `${size}px`;
+                    firework.style.height = `${size}px`;
+                    
+                    // 添加发光效果
+                    firework.style.boxShadow = `0 0 ${size * 2}px ${firework.style.background}`;
+                    
+                    overlay.appendChild(firework);
+                    
+                    setTimeout(() => firework.remove(), 2000);
+                }, i * 15);
+            }
+        }, wave * 800);
+    }
+    
+    // 添加持续的背景烟花
+    const continuousFireworks = setInterval(() => {
+        if (!document.querySelector('.game-over-overlay')) {
+            clearInterval(continuousFireworks);
+            return;
+        }
+        
+        for (let i = 0; i < 10; i++) {
+            setTimeout(() => {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 100 + Math.random() * 250;
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance;
+                
+                firework.style.setProperty('--x', `${x}px`);
+                firework.style.setProperty('--y', `${y}px`);
+                firework.style.left = `${20 + Math.random() * 60}%`;
+                firework.style.top = `${20 + Math.random() * 60}%`;
+                
+                const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#f38181', '#95e1d3', '#f3a683'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                firework.style.background = color;
+                
+                const size = 4 + Math.random() * 5;
+                firework.style.width = `${size}px`;
+                firework.style.height = `${size}px`;
+                firework.style.boxShadow = `0 0 ${size * 2}px ${color}`;
+                
+                overlay.appendChild(firework);
+                
+                setTimeout(() => firework.remove(), 1800);
+            }, i * 50);
+        }
+    }, 1000);
+}
+
+// 重新开始游戏
+function restartGame() {
+    state.bankerBalance = 500;
+    state.playerBalance = 500;
+    updateDisplay();
+    saveState();
+    
+    // 移除游戏结束遮罩
+    const overlay = document.querySelector('.game-over-overlay');
+    if (overlay) {
+        overlay.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => overlay.remove(), 300);
+    }
+}
+
+// 添加fadeOut动画
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// 重置余额
+function resetBalance(type) {
+    if (type === 'banker') state.bankerBalance = 500;
+    else state.playerBalance = 500;
+    updateDisplay();
+    saveState();
+}
+
+// 清空历史
+function clearHistory() {
+    if (confirm('确定要清空所有历史记录吗？')) {
+        state.history = [];
+        updateDisplay();
+        saveState();
+    }
+}
+
+// 重置局数
+function resetRound() {
+    if (confirm('确定要重置局数吗？')) {
+        state.round = 0;
+        updateDisplay();
+        saveState();
+    }
+}
+
+// 更新显示
+function updateDisplay() {
+    // 更新局数显示
+    const roundDisplay = document.getElementById('roundDisplay');
+    if (roundDisplay) {
+        roundDisplay.textContent = state.round;
+    }
+    
+    // 更新单人模式的庄闲余额（只在单人模式显示时更新）
+    if (state.gameMode === 'single') {
+        const bankerEl = document.getElementById('bankerBalance');
+        const playerEl = document.getElementById('playerBalance');
+        if (bankerEl) bankerEl.textContent = state.bankerBalance;
+        if (playerEl) playerEl.textContent = state.playerBalance;
+    } else {
+        // 多人模式：更新每个玩家的余额
+        const bankerEl = document.getElementById('bankerBalance');
+        if (bankerEl) bankerEl.textContent = state.bankerBalance;
+        
+        state.players.forEach(player => {
+            const playerBalanceEl = document.getElementById(`player${player.id}Balance`);
+            if (playerBalanceEl) {
+                playerBalanceEl.textContent = player.balance;
+            }
+        });
+    }
+    
+    updateBetDisplay();
+    
+    const historyList = document.getElementById('historyList');
+    
+    if (state.history.length === 0) {
+        historyList.innerHTML = '<div class="empty-history">暂无记录</div>';
+        return;
+    }
+    
+    historyList.innerHTML = state.history.map((item, index) => {
+        const sizeClass = item.isTriple ? 'triple' : (item.total >= 11 ? 'big' : 'small');
+        const sizeText = item.isTriple ? '围' : (item.total >= 11 ? '大' : '小');
+        
+        return `
+            <div class="history-item ${sizeClass}">
+                <span class="history-round">#${state.history.length - index}</span>
+                <span class="history-dice-nums">${item.dice.join(' ')}</span>
+                <span class="history-total">${item.total}</span>
+                <span class="history-size">${sizeText}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// 保存状态
+function saveState() {
+    localStorage.setItem('sicBoState', JSON.stringify(state));
+}
+
+// 加载状态
+function loadState() {
+    const saved = localStorage.getItem('sicBoState');
+    if (saved) {
+        try {
+            const loaded = JSON.parse(saved);
+            state.bankerBalance = loaded.bankerBalance || 500;
+            state.playerBalance = loaded.playerBalance || 500;
+            state.history = Array.isArray(loaded.history) ? loaded.history : [];
+            state.currentChip = loaded.currentChip || 50;
+            state.round = loaded.round || 0;
+            
+            // 加载游戏模式
+            state.gameMode = loaded.gameMode || 'single';
+            state.playerCount = loaded.playerCount || 1;
+            
+            // 确保 players 是一个数组
+            if (Array.isArray(loaded.players)) {
+                state.players = loaded.players.filter(p => p && typeof p === 'object');
+            } else {
+                state.players = [];
+            }
+            
+            state.currentPlayerId = loaded.currentPlayerId || (state.players.length > 0 ? state.players[0].id : 1);
+            
+            // 如果是多人模式但没有玩家数据，初始化
+            if (state.gameMode === 'multi' && state.players.length === 0) {
+                initializeMultiPlayers(state.playerCount);
+            }
+            
+            // 确保 bets 格式正确（数组格式）
+            state.bets = {};
+            if (loaded.bets && typeof loaded.bets === 'object') {
+                Object.keys(loaded.bets).forEach(key => {
+                    const val = loaded.bets[key];
+                    // 如果是数组就直接用，否则转换
+                    if (Array.isArray(val)) {
+                        state.bets[key] = val;
+                    } else if (typeof val === 'number' && val > 0) {
+                        // 旧格式：数字，转换为数组
+                        state.bets[key] = [val];
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Error loading state:', e);
+            // 清除损坏的数据
+            localStorage.removeItem('sicBoState');
+        }
+    }
+}
+
+// ============ 模式切换功能 ============
+
+let tempGameMode = 'single';  // 临时存储选择的模式
+let tempPlayerCount = 2;      // 临时存储选择的玩家数
+
+// 打开模式选择模态框（只在多人模式时打开）
+function openModeModal() {
+    const currentMode = state.gameMode || 'single';
+    
+    // 如果当前是单人模式，点击按钮直接切换到多人模式并打开选择框
+    if (currentMode === 'single') {
+        tempGameMode = 'multi';
+        tempPlayerCount = state.playerCount || 2;
+        
+        const modal = document.getElementById('modeModal');
+        modal.classList.add('active');
+        updateModeSelection();
+    } else {
+        // 如果当前是多人模式，点击按钮直接切换回单人模式
+        if (confirm('切换到单人模式将清除当前游戏数据，是否继续？')) {
+            switchToSingleMode();
+        }
+    }
+}
+
+// 关闭模态框
+function closeModeModal() {
+    const modal = document.getElementById('modeModal');
+    modal.classList.remove('active');
+}
+
+// 设置玩家数量
+function setPlayerCount(count) {
+    tempPlayerCount = count;
+    updateModeSelection();
+}
+
+// 更新选择状态
+function updateModeSelection() {
+    // 更新玩家数量按钮
+    document.querySelectorAll('.player-count-btn').forEach((btn, index) => {
+        const count = index + 2; // 2, 3, 4, 5, 6
+        if (count === tempPlayerCount) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+}
+
+// 确认模式切换（多人模式）
+function confirmModeChange() {
+    // 保存新模式
+    state.gameMode = 'multi';
+    state.playerCount = tempPlayerCount;
+    
+    // 初始化多人模式玩家数据
+    initializeMultiPlayers(tempPlayerCount);
+    
+    // 更新图标
+    const modeIcon = document.getElementById('modeIcon');
+    modeIcon.textContent = '👥';
+    
+    // 切换界面显示
+    switchToMultiMode();
+    
+    closeModeModal();
+    saveState();
+}
+
+// 初始化多人模式玩家数据
+function initializeMultiPlayers(count) {
+    state.players = [];
+    const playerCount = Math.min(count, PLAYER_COLORS.length); // 确保不超过颜色配置数量
+    
+    for (let i = 0; i < playerCount; i++) {
+        const colorConfig = PLAYER_COLORS[i];
+        if (!colorConfig) {
+            console.error(`No color config for player ${i + 1}`);
+            continue;
+        }
+        
+        state.players.push({
+            id: colorConfig.id,
+            name: colorConfig.name,
+            balance: 500,
+            color: colorConfig.color,
+            chipColor: colorConfig.chipColor,
+            lightColor: colorConfig.lightColor,
+            currentChip: 50
+        });
+    }
+    
+    if (state.players.length > 0) {
+        state.currentPlayerId = state.players[0].id; // 默认选中第一个玩家
+    }
+    state.bets = {}; // 清空押注
+}
+
+// 切换到多人模式界面
+function switchToMultiMode() {
+    // 隐藏单人模式元素
+    document.querySelectorAll('.single-mode-section').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // 显示多人模式元素
+    document.querySelectorAll('.multi-mode-section').forEach(el => {
+        el.style.display = '';
+    });
+    
+    const multiSection = document.getElementById('multiPlayersSection');
+    multiSection.style.display = 'flex';
+    
+    // 给body添加多人模式类名，用于CSS选择器
+    document.body.classList.add('multi-mode');
+    
+    // 生成玩家筹码区域UI
+    renderMultiPlayersUI();
+    
+    // 更新显示
+    updateDisplay();
+}
+
+// 切换到单人模式界面
+function switchToSingleMode() {
+    // 更新状态
+    state.gameMode = 'single';
+    state.playerCount = 1;
+    state.players = [];
+    state.currentPlayerId = null;
+    state.bets = {}; // 清空押注
+    
+    // 更新图标
+    const modeIcon = document.getElementById('modeIcon');
+    if (modeIcon) {
+        modeIcon.textContent = '👤';
+    }
+    
+    // 显示单人模式元素
+    const chipSection = document.querySelector('.header-chip-section.single-mode-section');
+    const scoreSection = document.querySelector('.score-section.single-mode-section');
+    if (chipSection) chipSection.style.display = 'flex';
+    if (scoreSection) scoreSection.style.display = 'flex';
+    
+    // 隐藏多人模式元素
+    document.querySelectorAll('.multi-mode-section').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    const multiSection = document.getElementById('multiPlayersSection');
+    if (multiSection) {
+        multiSection.style.display = 'none';
+        multiSection.innerHTML = ''; // 清空内容
+    }
+    
+    // 移除多人模式类名
+    document.body.classList.remove('multi-mode');
+    
+    // 清空所有押注显示
+    document.querySelectorAll('.chip-stack').forEach(stack => {
+        stack.innerHTML = '';
+    });
+    document.querySelectorAll('.bet-box').forEach(box => {
+        box.classList.remove('has-bet');
+    });
+    
+    // 更新显示
+    updateDisplay();
+    
+    // 保存状态
+    saveState();
+}
+
+// 渲染多人模式玩家UI
+function renderMultiPlayersUI() {
+    const container = document.getElementById('multiPlayersSection');
+    if (!container) {
+        console.error('multiPlayersSection container not found!');
+        return;
+    }
+    container.innerHTML = '';
+    
+    if (!state.players || state.players.length === 0) {
+        console.error('No players data!');
+        return;
+    }
+    
+    state.players.forEach(player => {
+        const row = document.createElement('div');
+        row.className = 'player-chip-row';
+        row.dataset.playerId = player.id;
+        row.style.color = player.lightColor;
+        
+        if (player.id === state.currentPlayerId) {
+            row.classList.add('active');
+        }
+        
+        row.innerHTML = `
+            <div class="player-info">
+                <div class="player-color-indicator" style="background: ${player.color};"></div>
+                <span class="player-name">${player.name}</span>
+            </div>
+            <div class="player-balance" id="player${player.id}Balance">${player.balance}</div>
+            <div class="player-chip-selector" id="player${player.id}Chips">
+                ${[10, 30, 50, 100, 300, 500].map(value => `
+                    <div class="chip ${value === player.currentChip ? 'selected' : ''}" 
+                         data-value="${value}"
+                         data-player-id="${player.id}"
+                         onclick="selectPlayerChip(${player.id}, ${value})"
+                         style="background: radial-gradient(circle at 30% 30%, ${player.lightColor}, ${player.chipColor});">
+                        ${value}
+                    </div>
+                `).join('')}
+            </div>
+            <div class="player-controls">
+                <button class="player-control-btn" onclick="adjustPlayerBalance(${player.id}, -100)">-100</button>
+                <button class="player-control-btn" onclick="adjustPlayerBalance(${player.id}, 100)">+100</button>
+                <button class="player-control-btn" onclick="resetPlayerBalance(${player.id})">重置</button>
+            </div>
+        `;
+        
+        // 点击整行选中该玩家
+        row.addEventListener('click', (e) => {
+            // 如果点击的是筹码或按钮，不触发行选择
+            if (!e.target.classList.contains('chip') && 
+                !e.target.classList.contains('player-control-btn')) {
+                selectPlayer(player.id);
+            }
+        });
+        
+        container.appendChild(row);
+    });
+    
+    // 当玩家数量>=4时，添加类名以便使用grid布局（每行两个）
+    if (state.players.length >= 4) {
+        container.classList.add('has-many-players');
+    } else {
+        container.classList.remove('has-many-players');
+    }
+}
+
+// 选择玩家
+function selectPlayer(playerId) {
+    state.currentPlayerId = playerId;
+    
+    // 更新UI
+    document.querySelectorAll('.player-chip-row').forEach(row => {
+        if (parseInt(row.dataset.playerId) === playerId) {
+            row.classList.add('active');
+        } else {
+            row.classList.remove('active');
+        }
+    });
+}
+
+// 选择玩家的筹码
+function selectPlayerChip(playerId, chipValue) {
+    const player = state.players.find(p => p.id === playerId);
+    if (player) {
+        player.currentChip = chipValue;
+        
+        // 自动选中该玩家
+        selectPlayer(playerId);
+        
+        // 更新该玩家的筹码选择UI
+        const chipSelector = document.getElementById(`player${playerId}Chips`);
+        chipSelector.querySelectorAll('.chip').forEach(chip => {
+            if (parseInt(chip.dataset.value) === chipValue) {
+                chip.classList.add('selected');
+            } else {
+                chip.classList.remove('selected');
+            }
+        });
+        
+        saveState();
+    }
+}
+
+// 调整玩家余额
+function adjustPlayerBalance(playerId, amount) {
+    const player = state.players.find(p => p.id === playerId);
+    if (player) {
+        player.balance = Math.max(0, player.balance + amount);
+        
+        // 更新显示
+        document.getElementById(`player${playerId}Balance`).textContent = player.balance;
+        
+        // 触发闪烁效果
+        if (amount > 0) {
+            const displayElement = document.getElementById(`player${playerId}Balance`);
+            displayElement.classList.add('flash-increase');
+            setTimeout(() => {
+                displayElement.classList.remove('flash-increase');
+            }, 800);
+        }
+        
+        saveState();
+        checkGameOver();
+    }
+}
+
+// 重置玩家余额
+function resetPlayerBalance(playerId) {
+    const player = state.players.find(p => p.id === playerId);
+    if (player) {
+        player.balance = 500;
+        document.getElementById(`player${playerId}Balance`).textContent = 500;
+        saveState();
+    }
+}
+
+// 初始化模式（在页面加载时调用）
+function initGameMode() {
+    state.gameMode = state.gameMode || 'single';
+    state.playerCount = state.playerCount || 2;
+    
+    // 更新图标
+    const modeIcon = document.getElementById('modeIcon');
+    if (modeIcon) {
+        modeIcon.textContent = state.gameMode === 'single' ? '👤' : '👥';
+    }
+    
+    // 如果是多人模式，恢复界面
+    if (state.gameMode === 'multi' && state.players && state.players.length > 0) {
+        switchToMultiMode();
+    }
+    
+    // 初始化拖动功能
+    initDraggableButton();
+}
+
+// ============ 可拖动悬浮按钮功能 ============
+
+function initDraggableButton() {
+    const btn = document.querySelector('.mode-toggle-btn');
+    if (!btn) return;
+    
+    let isDragging = false;
+    let startX, startY;
+    let currentX, currentY;
+    let isExpanded = false;
+    let expandTimer = null;
+    
+    // 恢复保存的位置和侧边
+    const savedSide = localStorage.getItem('modeBtnSide') || 'right';
+    const savedY = localStorage.getItem('modeBtnY') || '50%';
+    
+    if (savedSide === 'left') {
+        btn.classList.add('left-side');
+    }
+    btn.style.top = savedY;
+    
+    // 鼠标事件（仅PC端）
+    btn.addEventListener('mousedown', startDrag);
+    btn.addEventListener('mouseenter', expandButton);
+    btn.addEventListener('mouseleave', collapseButton);
+    
+    // 触摸事件（移动端）
+    let touchStartTime = 0;
+    btn.addEventListener('touchstart', (e) => {
+        touchStartTime = Date.now();
+        expandButton();
+        startDrag(e);
+    }, { passive: false });
+    
+    btn.addEventListener('touchend', (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+        
+        // 如果是快速点击（不是拖动），打开模态框
+        if (!isDragging && touchDuration < 300) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleButtonClick(e);
+        }
+    });
+    
+    // 点击事件（PC端）
+    btn.addEventListener('click', handleButtonClick);
+    
+    function handleButtonClick(e) {
+        // 如果刚刚拖动过，不触发点击
+        if (isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+        
+        // 防止重复触发
+        if (e.type === 'touchend') {
+            e.preventDefault();
+        }
+        
+        expandButton();
+        // 延迟一点再打开模态框，让动画完成
+        setTimeout(() => {
+            openModeModal();
+        }, 150);
+    }
+    
+    function startDrag(e) {
+        // 触摸事件不要阻止默认行为，让它可以触发click
+        if (e.type === 'mousedown') {
+            e.preventDefault();
+        }
+        
+        isDragging = false;
+        
+        const touch = e.touches ? e.touches[0] : e;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        
+        // 获取当前位置
+        const rect = btn.getBoundingClientRect();
+        currentX = rect.left + rect.width / 2;
+        currentY = rect.top + rect.height / 2;
+        
+        btn.classList.add('dragging');
+        expandButton();
+        
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('touchmove', onDrag, { passive: false });
+        document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('touchend', stopDrag);
+    }
+    
+    function onDrag(e) {
+        e.preventDefault();
+        const touch = e.touches ? e.touches[0] : e;
+        
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        
+        // 如果移动距离超过5px，认为是拖动
+        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+            isDragging = true;
+        }
+        
+        if (isDragging) {
+            currentY = currentY + deltaY;
+            startY = touch.clientY;
+            
+            // 限制在屏幕范围内
+            const maxY = window.innerHeight - 22.5;
+            const minY = 22.5;
+            currentY = Math.max(minY, Math.min(maxY, currentY));
+            
+            btn.style.top = currentY + 'px';
+        }
+    }
+    
+    function stopDrag(e) {
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('touchmove', onDrag);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchend', stopDrag);
+        
+        btn.classList.remove('dragging');
+        
+        const wasDragging = isDragging;
+        
+        if (wasDragging) {
+            // 吸附到最近的边
+            const centerX = window.innerWidth / 2;
+            const rect = btn.getBoundingClientRect();
+            const btnCenterX = rect.left + rect.width / 2;
+            
+            if (btnCenterX < centerX) {
+                // 吸附到左边
+                btn.classList.add('left-side');
+                btn.style.right = 'auto';
+                localStorage.setItem('modeBtnSide', 'left');
+            } else {
+                // 吸附到右边
+                btn.classList.remove('left-side');
+                btn.style.left = 'auto';
+                localStorage.setItem('modeBtnSide', 'right');
+            }
+            
+            // 保存Y位置
+            localStorage.setItem('modeBtnY', btn.style.top);
+            
+            // 拖动后收起按钮
+            collapseButton();
+        }
+        
+        // 延迟重置拖动标志，确保click事件能正确判断
+        setTimeout(() => {
+            isDragging = false;
+        }, 100);
+    }
+    
+    function expandButton() {
+        clearTimeout(expandTimer);
+        isExpanded = true;
+        btn.classList.add('expanded');
+    }
+    
+    function collapseButton() {
+        clearTimeout(expandTimer);
+        expandTimer = setTimeout(() => {
+            isExpanded = false;
+            btn.classList.remove('expanded');
+        }, 300);
+    }
+}
+</script>
+</body>
+</html>
