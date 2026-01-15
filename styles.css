@@ -1941,3 +1941,94 @@ body::before {
 .player-control-btn:hover {
     background: rgba(255,255,255,0.2);
 }
+
+/* ============ PC端优化（多人模式） ============ */
+@media screen and (min-width: 1025px) {
+    /* PC端多人模式：减小闲家区域高度 */
+    .multi-players-section {
+        max-height: 180px; /* 限制最大高度 */
+        gap: 4px; /* 减小间距 */
+    }
+    
+    .player-chip-row {
+        padding: 4px 8px; /* 减小内边距 */
+        gap: 8px; /* 减小元素间距 */
+        min-height: 40px; /* 设置最小高度 */
+    }
+    
+    .player-info {
+        min-width: 80px; /* 减小最小宽度 */
+        gap: 6px;
+    }
+    
+    .player-color-indicator {
+        width: 16px; /* 减小颜色指示器大小 */
+        height: 16px;
+    }
+    
+    .player-name {
+        font-size: 0.85rem; /* 减小字体 */
+    }
+    
+    .player-balance {
+        font-size: 0.9rem; /* 减小余额字体 */
+        min-width: 60px;
+    }
+    
+    .player-chip-selector {
+        gap: 4px; /* 减小筹码间距 */
+    }
+    
+    .player-chip-selector .chip {
+        width: 32px; /* 减小筹码大小 */
+        height: 32px;
+        font-size: 0.7rem;
+        padding: 2px;
+    }
+    
+    .player-controls {
+        gap: 3px;
+    }
+    
+    .player-control-btn {
+        padding: 3px 6px;
+        font-size: 0.65rem;
+    }
+    
+    /* 确保header不会太高 */
+    .header {
+        max-height: 200px; /* 限制header最大高度 */
+        overflow-y: auto; /* 如果内容太多可以滚动 */
+    }
+    
+    /* 确保核心押注区有足够空间 */
+    .betting-table {
+        min-height: 400px; /* 确保最小高度 */
+    }
+    
+    /* 优化主内容区布局 */
+    .main-content {
+        flex: 1;
+        min-height: 0;
+    }
+    
+    /* 减小骰子输入区高度，给押注区更多空间 */
+    .left-panel {
+        flex-shrink: 0;
+        max-height: 120px; /* 限制最大高度 */
+    }
+    
+    .dice-input-section {
+        padding: 6px;
+    }
+    
+    .dice-input-group {
+        padding: 4px;
+    }
+    
+    .dice-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
+}
