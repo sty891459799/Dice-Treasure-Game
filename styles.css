@@ -412,6 +412,8 @@ body::before {
 .dice-btn {
     width: 36px;
     height: 36px;
+    min-width: 36px; /* 防止宽度被压缩 */
+    flex-shrink: 0; /* 不允许收缩 */
     border: none;
     border-radius: 6px;
     background: transparent;
@@ -1141,6 +1143,8 @@ body::before {
     .dice-btn {
         width: 32px;
         height: 32px;
+        min-width: 32px; /* 防止宽度被压缩 */
+        flex-shrink: 0; /* 不允许收缩 */
     }
     
     .score-section {
@@ -1219,6 +1223,8 @@ body::before {
     .dice-btn {
         width: 28px;
         height: 28px;
+        min-width: 28px; /* 防止宽度被压缩 */
+        flex-shrink: 0; /* 不允许收缩 */
     }
     
     .dice-input-group label {
@@ -1345,6 +1351,8 @@ body::before {
     .dice-btn {
         width: 26px;
         height: 26px;
+        min-width: 26px; /* 防止宽度被压缩 */
+        flex-shrink: 0; /* 不允许收缩 */
     }
     
     .dice-input-group label {
@@ -2059,6 +2067,8 @@ body::before {
     body.multi-mode .dice-btn {
         width: 28px; /* 减小骰子按钮大小 */
         height: 28px;
+        min-width: 28px; /* 防止宽度被压缩 */
+        flex-shrink: 0; /* 不允许收缩 */
         font-size: 0.75rem;
         padding: 2px;
     }
