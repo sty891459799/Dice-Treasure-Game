@@ -63,20 +63,23 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 局数计数器和清除押注按钮容器 -->
+            <div class="round-and-clear-container">
+                <!-- 局数计数器 -->
+                <div class="round-counter">
+                    <span class="round-label">第</span>
+                    <span class="round-number" id="roundDisplay">0</span>
+                    <span class="round-label">局</span>
+                    <button class="round-reset-btn" onclick="resetRound()" title="重置局数">重置</button>
+                </div>
                 
-                <!-- 重置押注按钮 -->
+                <!-- 清除押注按钮 -->
                 <button class="clear-bets-btn single-mode-section" onclick="clearAllBets()" title="清除所有押注">
                     <span class="btn-icon">🗑️</span>
                     <span class="btn-text">清除押注</span>
                 </button>
-            </div>
-            
-            <!-- 局数计数器 -->
-            <div class="round-counter">
-                <span class="round-label">第</span>
-                <span class="round-number" id="roundDisplay">0</span>
-                <span class="round-label">局</span>
-                <button class="round-reset-btn" onclick="resetRound()" title="重置局数">重置</button>
             </div>
         </header>
 
