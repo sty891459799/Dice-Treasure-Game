@@ -89,6 +89,8 @@ async function build() {
     console.log(`压缩后大小: ${(minifiedSize / 1024).toFixed(2)} KB`);
     console.log(`压缩率: ${reduction}%`);
     console.log('\n🎉 文件已准备好，可以直接在浏览器中打开！');
+    console.log('\n💡 GitHub Pages 访问:');
+    console.log('   https://你的用户名.github.io/仓库名/dist/index-standalone.min.html');
     
   } catch (error) {
     console.error('❌ 构建失败:', error.message);

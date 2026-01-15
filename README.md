@@ -81,13 +81,40 @@ sic-bo/
 ## 🚀 部署
 
 ### GitHub Pages
-1. 推送代码到GitHub仓库
-2. 在仓库设置中启用GitHub Pages
-3. 选择main分支
-4. 访问生成的网址
+
+#### 方式一：使用单文件版本（推荐）
+1. 运行构建命令生成压缩版本：
+   ```bash
+   npm run build
+   ```
+2. 提交并推送代码到 GitHub：
+   ```bash
+   git add dist/index-standalone.min.html
+   git commit -m "Update standalone version"
+   git push origin main
+   ```
+3. 在仓库设置中启用 GitHub Pages：
+   - 访问：`https://github.com/sty891459799/Dice-Treasure-Game/settings/pages`
+   - Source 选择：`Deploy from a branch`
+   - Branch 选择：`main`
+   - Folder 选择：`/ (root)`
+4. 访问网站：
+   ```
+   https://sty891459799.github.io/Dice-Treasure-Game/dist/index-standalone.min.html
+   ```
+
+#### 方式二：使用多文件版本
+1. 直接推送代码到 GitHub（无需构建）
+2. 在仓库设置中启用 GitHub Pages（同上）
+3. 访问网站：
+   ```
+   https://sty891459799.github.io/Dice-Treasure-Game/
+   ```
+   会自动加载 `index.html`（需要外部 CSS/JS 文件）
 
 ### 本地运行
-直接打开`index.html`文件即可
+- **多文件版本**：直接打开 `index.html` 文件即可
+- **单文件版本**：运行 `npm run build` 后，打开 `index-standalone.min.html`
 
 ### 📦 构建压缩版本
 

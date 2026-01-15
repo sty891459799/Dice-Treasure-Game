@@ -1,5 +1,5 @@
 node_modules/
-dist/*.min.html
 *.log
 .DS_Store
+# 注意：dist/index-standalone.min.html 会被提交到 GitHub，用于 GitHub Pages
 
