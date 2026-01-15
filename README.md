@@ -82,35 +82,89 @@ sic-bo/
 
 ### GitHub Pages
 
+#### ⚡ 自动更新机制
+
+**GitHub Pages 会自动更新，但取决于你使用的版本：**
+
+- **多文件版本**：✅ 完全自动
+  - 更新 `index.html`、`styles.css`、`script.js` 等源文件
+  - 直接 `git push origin main`
+  - GitHub Pages 会在 1-3 分钟内自动更新
+
+- **单文件版本**：⚠️ 需要手动构建
+  - 更新源文件后，需要先运行 `npm run build`
+  - 然后提交 `dist/index-standalone.min.html`
+  - 再 `git push origin main`
+  - GitHub Pages 会在 1-3 分钟内自动更新
+
 #### 方式一：使用单文件版本（推荐）
+
 1. 运行构建命令生成压缩版本：
    ```bash
    npm run build
    ```
 2. 提交并推送代码到 GitHub：
    ```bash
-   git add dist/index-standalone.min.html
-   git commit -m "Update standalone version"
+   git add .
+   git commit -m "Update code"
    git push origin main
    ```
+   > 💡 **提示**：如果只更新了源文件，记得先运行 `npm run build` 再提交
+
 3. 在仓库设置中启用 GitHub Pages：
    - 访问：`https://github.com/sty891459799/Dice-Treasure-Game/settings/pages`
    - Source 选择：`Deploy from a branch`
    - Branch 选择：`main`
    - Folder 选择：`/ (root)`
+
 4. 访问网站：
    ```
    https://sty891459799.github.io/Dice-Treasure-Game/dist/index-standalone.min.html
    ```
 
-#### 方式二：使用多文件版本
+#### 方式二：使用多文件版本（自动更新）
+
 1. 直接推送代码到 GitHub（无需构建）
+   ```bash
+   git add .
+   git commit -m "Update code"
+   git push origin main
+   ```
 2. 在仓库设置中启用 GitHub Pages（同上）
 3. 访问网站：
    ```
    https://sty891459799.github.io/Dice-Treasure-Game/
    ```
    会自动加载 `index.html`（需要外部 CSS/JS 文件）
+
+#### 🤖 自动化构建（可选）
+
+如果想实现单文件版本的自动构建，可以使用 GitHub Actions。创建 `.github/workflows/build.yml`：
+
+```yaml
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm install
+      - run: npm run build
+      - run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add dist/index-standalone.min.html
+          git commit -m "Auto-build standalone version" || exit 0
+          git push
+```
 
 ### 本地运行
 - **多文件版本**：直接打开 `index.html` 文件即可
