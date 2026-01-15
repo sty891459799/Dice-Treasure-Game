@@ -2036,13 +2036,16 @@ body::before {
     }
     
     body.multi-mode .dice-inputs {
-        flex: 0 1 auto; /* 改为不拉伸，由内容决定大小 */
+        flex: 1; /* 占满父容器宽度 */
+        width: 100%; /* 确保占满宽度 */
         gap: 6px; /* 减小骰子组之间的间距 */
         min-height: auto; /* 确保最小高度由内容决定 */
+        /* flex子元素会自动均分空间 */
     }
     
     body.multi-mode .dice-input-group {
-        flex: 0 1 auto; /* 改为不拉伸，由内容决定大小 */
+        flex: 1; /* 均分宽度 */
+        min-width: 0; /* 允许收缩，防止溢出 */
         padding: 3px 5px; /* 减小内边距 */
         gap: 4px;
         min-height: auto; /* 确保最小高度由内容决定 */
