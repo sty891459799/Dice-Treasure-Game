@@ -28,7 +28,8 @@ let state = {
     history: [],
     bets: {},        // 单人: { "big": [50, 100], "small": [10] }
                      // 多人: { "big": [{playerId: 1, amount: 50}, {playerId: 2, amount: 100}] }
-    currentChip: 50
+    currentChip: 50,
+    round: 0         // 当前局数
 };
 
 // 初始化
@@ -462,6 +463,9 @@ function confirmResult() {
     
     const total = dice.reduce((a, b) => a + b, 0);
     const isTriple = dice[0] === dice[1] && dice[1] === dice[2];
+    
+    // 增加局数
+    state.round++;
     
     // 计算输赢并更新积分
     calculateWinnings(dice, total, isTriple);
@@ -1049,8 +1053,23 @@ function clearHistory() {
     }
 }
 
+// 重置局数
+function resetRound() {
+    if (confirm('确定要重置局数吗？')) {
+        state.round = 0;
+        updateDisplay();
+        saveState();
+    }
+}
+
 // 更新显示
 function updateDisplay() {
+    // 更新局数显示
+    const roundDisplay = document.getElementById('roundDisplay');
+    if (roundDisplay) {
+        roundDisplay.textContent = state.round;
+    }
+    
     // 更新单人模式的庄闲余额（只在单人模式显示时更新）
     if (state.gameMode === 'single') {
         const bankerEl = document.getElementById('bankerBalance');
@@ -1109,6 +1128,7 @@ function loadState() {
             state.playerBalance = loaded.playerBalance || 500;
             state.history = Array.isArray(loaded.history) ? loaded.history : [];
             state.currentChip = loaded.currentChip || 50;
+            state.round = loaded.round || 0;
             
             // 加载游戏模式
             state.gameMode = loaded.gameMode || 'single';
